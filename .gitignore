@@ -216,10 +216,10 @@ desktop.ini
 .nfs*
 
 # Application specific files
-# Database files
-*.db
-money_management.db
-instance/*.db
+# Database files - allowing main database to be committed
+# *.db  # Commented out to allow main database
+# money_management.db  # Commented out to allow main database
+
 
 # Configuration files with sensitive data
 config_local.py
@@ -287,7 +287,7 @@ coverage.xml
 # Flask session files
 flask_session/
 
-# SQLite WAL files
+# SQLite WAL files - keeping these ignored as they're temporary
 *.db-wal
 *.db-shm
 
