@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-line"></i> Financial Analytics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportData()">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshCharts()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Time Period Selection -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label">Time Period</label>
+                        <select class="form-select" id="timePeriod" onchange="updateCharts()">
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="180">Last 6 Months</option>
+                            <option value="365" selected>Last Year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Chart Type</label>
+                        <select class="form-select" id="chartType" onchange="updateCharts()">
+                            <option value="all" selected>All Charts</option>
+                            <option value="spending">Spending Analysis</option>
+                            <option value="trends">Trends</option>
+                            <option value="categories">Categories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <h5 class="text-primary mb-0" id="totalExpenses">$0</h5>
+                                <small class="text-muted">Total Expenses</small>
+                            </div>
+                            <div class="col-3">
+                                <h5 class="text-success mb-0" id="avgDaily">$0</h5>
+                                <small class="text-muted">Avg Daily</small>
+                            </div>
+                            <div class="col-3">
+                                <h5 class="text-warning mb-0" id="highestCategory">-</h5>
+                                <small class="text-muted">Top Category</small>
+                            </div>
+                            <div class="col-3">
+                                <h5 class="text-info mb-0" id="transactionCount">0</h5>
+                                <small class="text-muted">Transactions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if spending_chart and trend_chart and category_chart %}
+<!-- Charts Row 1 -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Spending by Category</h5>
+            </div>
+            <div class="card-body">
+                <div id="spendingChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Monthly Spending Trend</h5>
+            </div>
+            <div class="card-body">
+                <div id="trendChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Category Comparison</h5>
+            </div>
+            <div class="card-body">
+                <div id="categoryChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insights Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <i class="fas fa-trending-up fa-2x text-primary mb-2"></i>
+                <h6 class="card-title">Spending Trend</h6>
+                <p class="card-text text-success">↗ 5% increase from last month</p>
+                <small class="text-muted">Monitor your spending patterns</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <i class="fas fa-piggy-bank fa-2x text-success mb-2"></i>
+                <h6 class="card-title">Savings Rate</h6>
+                <p class="card-text text-success">15% of income</p>
+                <small class="text-muted">Great job saving!</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <h6 class="card-title">Budget Alert</h6>
+                <p class="card-text text-warning">2 categories over budget</p>
+                <small class="text-muted">Review your spending limits</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-alt fa-2x text-info mb-2"></i>
+                <h6 class="card-title">Days to Goal</h6>
+                <p class="card-text text-info">45 days</p>
+                <small class="text-muted">Next financial goal</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analysis -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> Category Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>% of Total</th>
+                                <th>Avg per Transaction</th>
+                                <th>Transactions</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-primary">Food</span></td>
+                                <td>$650.00</td>
+                                <td>28%</td>
+                                <td>$32.50</td>
+                                <td>20</td>
+                                <td><i class="fas fa-arrow-up text-success"></i> +5%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-secondary">Housing</span></td>
+                                <td>$1,200.00</td>
+                                <td>45%</td>
+                                <td>$300.00</td>
+                                <td>4</td>
+                                <td><i class="fas fa-minus text-muted"></i> 0%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">Transportation</span></td>
+                                <td>$280.00</td>
+                                <td>12%</td>
+                                <td>$35.00</td>
+                                <td>8</td>
+                                <td><i class="fas fa-arrow-down text-danger"></i> -10%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">Entertainment</span></td>
+                                <td>$180.00</td>
+                                <td>8%</td>
+                                <td>$30.00</td>
+                                <td>6</td>
+                                <td><i class="fas fa-arrow-up text-success"></i> +15%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-info">Healthcare</span></td>
+                                <td>$150.00</td>
+                                <td>7%</td>
+                                <td>$50.00</td>
+                                <td>3</td>
+                                <td><i class="fas fa-arrow-up text-success"></i> +20%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-brain"></i> AI Insights</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-primary"><i class="fas fa-lightbulb"></i> Key Insights</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Your food spending is consistent with your budget</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <small>Entertainment costs increased 15% this month</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-arrow-down text-success"></i>
+                            <small>Transportation expenses are trending down</small>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-success"><i class="fas fa-thumbs-up"></i> Opportunities</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <small>Consider increasing your savings rate by 2%</small>
+                        </li>
+                        <li class="mb-2">
+                            <small>You could save $50/month on entertainment</small>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h6 class="text-info"><i class="fas fa-chart-line"></i> Predictions</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <small>Expected monthly spending: $2,350</small>
+                        </li>
+                        <li class="mb-2">
+                            <small>Goal achievement: On track</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-5">
+    <i class="fas fa-chart-line fa-5x text-muted mb-4"></i>
+    <h4 class="text-muted">No data to analyze yet</h4>
+    <p class="text-muted mb-4">Add some expenses to see beautiful analytics and insights.</p>
+    <a href="{{ url_for('add_expense') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Add Your First Expense
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if spending_chart and trend_chart and category_chart %}
+<script>
+// Chart data from Flask
+const spendingChartData = {{ spending_chart|safe }};
+const trendChartData = {{ trend_chart|safe }};
+const categoryChartData = {{ category_chart|safe }};
+
+// Render charts
+Plotly.newPlot('spendingChart', spendingChartData.data, spendingChartData.layout, {responsive: true});
+Plotly.newPlot('trendChart', trendChartData.data, trendChartData.layout, {responsive: true});
+Plotly.newPlot('categoryChart', categoryChartData.data, categoryChartData.layout, {responsive: true});
+
+function updateCharts() {
+    const timePeriod = document.getElementById('timePeriod').value;
+    const chartType = document.getElementById('chartType').value;
+    
+    // This would typically make an AJAX request to get updated data
+    console.log('Updating charts for period:', timePeriod, 'type:', chartType);
+    
+    // Update summary statistics
+    updateSummaryStats();
+}
+
+function updateSummaryStats() {
+    // This would be populated with real data from the server
+    document.getElementById('totalExpenses').textContent = '$2,460';
+    document.getElementById('avgDaily').textContent = '$82';
+    document.getElementById('highestCategory').textContent = 'Housing';
+    document.getElementById('transactionCount').textContent = '41';
+}
+
+function exportData() {
+    // This would generate and download a CSV/Excel file
+    alert('Export functionality would be implemented here');
+}
+
+function refreshCharts() {
+    // This would refresh all chart data
+    alert('Refresh functionality would be implemented here');
+    location.reload();
+}
+
+// Initialize summary stats
+document.addEventListener('DOMContentLoaded', function() {
+    updateSummaryStats();
+});
+</script>
+{% endif %}
+{% endblock %}

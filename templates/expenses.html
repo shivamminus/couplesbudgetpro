@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2"><i class="fas fa-receipt"></i> Expenses</h1>
+        {% if partner %}
+            <small class="text-muted">
+                <i class="fas fa-heart text-danger"></i> 
+                Combined expenses with {{ partner.username }}
+            </small>
+        {% endif %}
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Expense
+        </a>
+    </div>
+</div>
+
+<!-- Filter Row -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Filter by Category</h6>
+                <select class="form-select" onchange="filterByCategory(this.value)">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5 class="mb-0">£{{ expenses.items|map(attribute='amount')|sum|round(2) }}</h5>
+                            <small class="text-muted">Total Amount</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5 class="mb-0">{{ expenses.total }}</h5>
+                            <small class="text-muted">Total Expenses</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5 class="mb-0">£{{ (expenses.items|map(attribute='amount')|sum / expenses.total)|round(2) if expenses.total > 0 else 0 }}</h5>
+                            <small class="text-muted">Average Amount</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5 class="mb-0">{{ expenses.items|selectattr('priority', 'equalto', 'high')|list|length }}</h5>
+                            <small class="text-muted">High Priority</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expenses Table -->
+<div class="card">
+    <div class="card-body">
+        {% if expenses.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Subcategory</th>
+                        <th>Amount</th>
+                        <th>Priority</th>
+                        {% if partner %}<th>Added By</th>{% endif %}
+                        <th>Recurring</th>
+                        <th>Tags</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses.items %}
+                    <tr class="expense-priority-{{ expense.priority }}">
+                        <td>{{ expense.date.strftime('%m/%d/%Y') }}</td>
+                        <td>
+                            <strong>{{ expense.description }}</strong>
+                            {% if expense.is_recurring %}
+                            <br><small class="text-muted">
+                                <i class="fas fa-redo-alt"></i> {{ expense.frequency|title if expense.frequency }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ expense.category.title() }}</span>
+                        </td>
+                        <td>
+                            {% if expense.subcategory %}
+                                <span class="badge bg-secondary">{{ expense.subcategory.title() }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>£{{ "%.2f"|format(expense.amount) }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if expense.priority == 'high' %}bg-danger
+                                {% elif expense.priority == 'medium' %}bg-warning text-dark
+                                {% else %}bg-success{% endif %}">
+                                {{ expense.priority.title() }}
+                            </span>
+                        </td>
+                        {% if partner %}
+                        <td>
+                            <small class="text-muted">
+                                {% if expense.user_id == current_user.id %}
+                                    <i class="fas fa-user"></i> You
+                                {% else %}
+                                    <i class="fas fa-heart text-danger"></i> {{ partner.username }}
+                                {% endif %}
+                            </small>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if expense.is_recurring %}
+                                <i class="fas fa-check text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times text-muted"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if expense.tags %}
+                                {% for tag in expense.tags.split(',') %}
+                                    <span class="badge bg-light text-dark">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   title="Edit expense">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('delete_expense', expense_id=expense.id) }}" 
+                                   class="btn btn-outline-danger btn-sm" 
+                                   title="Delete expense"
+                                   onclick="return confirm('Are you sure you want to delete this expense?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if expenses.pages > 1 %}
+        <nav aria-label="Expense pagination">
+            <ul class="pagination justify-content-center">
+                {% if expenses.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('expenses', page=expenses.prev_num) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in expenses.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != expenses.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('expenses', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if expenses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('expenses', page=expenses.next_num) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-receipt fa-5x text-muted mb-4"></i>
+            <h4 class="text-muted">No expenses found</h4>
+            <p class="text-muted mb-4">Start tracking your expenses to better manage your finances.</p>
+            <a href="{{ url_for('add_expense') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Add Your First Expense
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterByCategory(category) {
+    const url = new URL(window.location);
+    if (category) {
+        url.searchParams.set('category', category);
+    } else {
+        url.searchParams.delete('category');
+    }
+    window.location = url;
+}
+
+// Set the current category filter in the dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    if (category) {
+        document.querySelector('select').value = category;
+    }
+});
+</script>
+{% endblock %}

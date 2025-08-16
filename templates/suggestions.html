@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}AI Suggestions - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-lightbulb"></i> AI-Powered Suggestions</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" onclick="refreshSuggestions()">
+            <i class="fas fa-sync"></i> Refresh Suggestions
+        </button>
+    </div>
+</div>
+
+<!-- Savings Suggestions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-piggy-bank text-success"></i> Money Saving Opportunities</h5>
+            </div>
+            <div class="card-body">
+                {% if savings_suggestions %}
+                <div class="row">
+                    {% for suggestion in savings_suggestions %}
+                    <div class="col-lg-6 mb-3">
+                        <div class="card border-{% if suggestion.priority == 'high' %}success{% elif suggestion.priority == 'medium' %}warning{% else %}info{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ suggestion.category }}</h6>
+                                    <span class="badge bg-{% if suggestion.priority == 'high' %}success{% elif suggestion.priority == 'medium' %}warning{% else %}info{% endif %}">
+                                        {{ suggestion.priority.title() }} Priority
+                                    </span>
+                                </div>
+                                <p class="text-muted mb-3">{{ suggestion.suggestion }}</p>
+                                <div class="row">
+                                    <div class="col-8">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-dollar-sign text-success me-2"></i>
+                                            <div>
+                                                <strong class="text-success">£{{ "%.0f"|format(suggestion.potential_savings) }}/month</strong>
+                                                <br><small class="text-muted">Potential Savings</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-end">
+                                        <button class="btn btn-outline-success btn-sm" onclick="implementSuggestion('savings', {{ loop.index0 }})">
+                                            <i class="fas fa-check"></i> Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Total Savings Potential -->
+                <div class="alert alert-success">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1"><i class="fas fa-chart-line"></i> Total Monthly Savings Potential</h6>
+                            <p class="mb-0">Implementing all suggestions could save you up to <strong>£{{ savings_suggestions|map(attribute='potential_savings')|sum|round(0) }} per month</strong></p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <p class="mb-0 text-muted">That's <strong>£{{ (savings_suggestions|map(attribute='potential_savings')|sum * 12)|round(0) }} annually!</strong></p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Analyzing your spending patterns...</h6>
+                    <p class="text-muted">Add more expenses to get personalized money-saving suggestions</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Investment Recommendations -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line text-primary"></i> Investment Recommendations</h5>
+            </div>
+            <div class="card-body">
+                {% if investment_recommendations %}
+                <div class="row">
+                    {% for recommendation in investment_recommendations %}
+                    <div class="col-lg-4 mb-3">
+                        <div class="card border-{% if recommendation.risk_level == 'low' %}success{% elif recommendation.risk_level == 'medium' %}warning{% else %}danger{% endif %}">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">{{ recommendation.type }}</h6>
+                                    <span class="badge bg-{% if recommendation.risk_level == 'low' %}success{% elif recommendation.risk_level == 'medium' %}warning{% else %}danger{% endif %}">
+                                        {{ recommendation.risk_level.title() }} Risk
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">{{ recommendation.description }}</p>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Recommended Amount</small>
+                                        <div class="h6 text-primary">£{{ "%.0f"|format(recommendation.recommended_amount) }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Expected Return</small>
+                                        <div class="h6 text-success">{{ recommendation.expected_return }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">Investment Type</small>
+                                    <div class="text-dark">{{ recommendation.investment_type }}</div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="learnMore('{{ recommendation.type }}')">
+                                        <i class="fas fa-info-circle"></i> Learn More
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Investment Tips -->
+                <div class="alert alert-info">
+                    <h6 class="mb-2"><i class="fas fa-info-circle"></i> Investment Tips</h6>
+                    <ul class="mb-0">
+                        <li>Start with low-risk investments if you're new to investing</li>
+                        <li>Diversify your portfolio across different asset classes</li>
+                        <li>Consider your time horizon when choosing investments</li>
+                        <li>Always do your own research before investing</li>
+                    </ul>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Building investment recommendations...</h6>
+                    <p class="text-muted">Track your savings and expenses to get personalized investment advice</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personalized Insights -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-brain text-info"></i> Personalized Insights</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <div class="alert alert-primary">
+                            <h6 class="mb-2"><i class="fas fa-user-tie"></i> Your Financial Profile</h6>
+                            <p class="mb-1">Based on your spending patterns, you appear to be a <strong>Balanced Spender</strong></p>
+                            <small class="text-muted">You maintain good control over essential expenses while allowing room for enjoyment</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-thumbs-up"></i> What You're Doing Well</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                <small>Consistent spending on essential categories</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                <small>Good tracking habits with detailed expense records</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                <small>Balanced approach to entertainment spending</small>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> Areas for Improvement</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-up text-warning"></i>
+                                <small>Consider increasing your emergency fund</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-up text-warning"></i>
+                                <small>Look for ways to optimize recurring subscriptions</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-up text-warning"></i>
+                                <small>Set up automatic savings transfers</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-target text-danger"></i> Action Items</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Review subscriptions</h6>
+                                <small class="text-muted">Cancel unused services</small>
+                            </div>
+                            <small class="text-success">£50/mo</small>
+                        </div>
+                    </div>
+                    
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Meal planning</h6>
+                                <small class="text-muted">Reduce food waste</small>
+                            </div>
+                            <small class="text-success">£75/mo</small>
+                        </div>
+                    </div>
+                    
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Automate savings</h6>
+                                <small class="text-muted">Set up automatic transfers</small>
+                            </div>
+                            <small class="text-primary">Setup</small>
+                        </div>
+                    </div>
+                    
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Emergency fund</h6>
+                                <small class="text-muted">Build to 3 months expenses</small>
+                            </div>
+                            <small class="text-info">Goal</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar text-secondary"></i> Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-2">
+                        <h5 class="text-primary mb-0">85%</h5>
+                        <small class="text-muted">Budget Health</small>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <h5 class="text-success mb-0">12%</h5>
+                        <small class="text-muted">Savings Rate</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning mb-0">3.2</h5>
+                        <small class="text-muted">Months Emergency</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-info mb-0">7.5</h5>
+                        <small class="text-muted">Financial Score</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Educational Content -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap text-primary"></i> Financial Education</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-book fa-2x text-primary mb-2"></i>
+                                <h6>50/30/20 Rule</h6>
+                                <p class="small text-muted">Learn about the popular budgeting method</p>
+                                <button class="btn btn-outline-primary btn-sm">Read Article</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                <h6>Investment Basics</h6>
+                                <p class="small text-muted">Understanding risk and return in investing</p>
+                                <button class="btn btn-outline-success btn-sm">Learn More</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                                <h6>Emergency Funds</h6>
+                                <p class="small text-muted">How much to save and where to keep it</p>
+                                <button class="btn btn-outline-warning btn-sm">Explore</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshSuggestions() {
+    // This would make an AJAX request to get fresh suggestions
+    showToast('Refreshing suggestions...', 'info');
+    setTimeout(() => {
+        showToast('Suggestions updated!', 'success');
+        location.reload();
+    }, 2000);
+}
+
+function implementSuggestion(type, index) {
+    const suggestionTypes = {
+        'savings': 'money-saving suggestion',
+        'investment': 'investment recommendation'
+    };
+    
+    if (confirm(`Are you sure you want to implement this ${suggestionTypes[type]}?`)) {
+        showToast('Suggestion implemented! We\'ll track your progress.', 'success');
+        // This would typically save the user's choice and possibly create a goal or budget
+    }
+}
+
+function learnMore(investmentType) {
+    // This would show detailed information about the investment type
+    alert('Detailed information about ' + investmentType + ' would be displayed here, including risks, benefits, and how to get started.');
+}
+
+function showToast(message, type) {
+    // Simple toast notification (in a real app, you might use a library like Bootstrap Toast)
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any initialization code here
+    console.log('AI Suggestions page loaded');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Add Goal - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-plus-circle"></i> Create Financial Goal</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {{ form.title(class="form-control", placeholder="e.g., Emergency Fund, Dream Vacation") }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.title.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="3", placeholder="Describe your goal and why it's important to you") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.description.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.target_amount.label(class="form-label") }}
+                            {{ form.target_amount(class="form-control", step="0.01", min="0", placeholder="0.00") }}
+                            {% if form.target_amount.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.target_amount.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.target_date.label(class="form-label") }}
+                            {{ form.target_date(class="form-control") }}
+                            {% if form.target_date.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.target_date.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.category.label(class="form-label") }}
+                        {{ form.category(class="form-select", onchange="updateGoalSuggestions()") }}
+                        {% if form.category.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.category.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Goal Calculation Helper -->
+                    <div class="card bg-light mb-4" id="goalCalculator" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-calculator"></i> Goal Calculator</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Monthly Savings Needed:</strong></p>
+                                    <h5 class="text-primary" id="monthlySavings">$0</h5>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Weekly Savings Needed:</strong></p>
+                                    <h5 class="text-success" id="weeklySavings">$0</h5>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Based on your target date and amount</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('goals') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.submit(class="btn btn-success w-100") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Goal Templates -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-magic"></i> Quick Start Templates</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body p-3">
+                                <h6 class="text-primary mb-2">
+                                    <i class="fas fa-shield-alt"></i> Emergency Fund
+                                </h6>
+                                <p class="small text-muted mb-2">Save 3-6 months of expenses</p>
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="applyTemplate('emergency')">
+                                    Use This Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body p-3">
+                                <h6 class="text-success mb-2">
+                                    <i class="fas fa-umbrella-beach"></i> Vacation Fund
+                                </h6>
+                                <p class="small text-muted mb-2">Plan your dream getaway</p>
+                                <button class="btn btn-outline-success btn-sm w-100" onclick="applyTemplate('vacation')">
+                                    Use This Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body p-3">
+                                <h6 class="text-warning mb-2">
+                                    <i class="fas fa-home"></i> Home Down Payment
+                                </h6>
+                                <p class="small text-muted mb-2">Save for your dream home</p>
+                                <button class="btn btn-outline-warning btn-sm w-100" onclick="applyTemplate('home')">
+                                    Use This Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body p-3">
+                                <h6 class="text-info mb-2">
+                                    <i class="fas fa-car"></i> New Vehicle
+                                </h6>
+                                <p class="small text-muted mb-2">Save for reliable transportation</p>
+                                <button class="btn btn-outline-info btn-sm w-100" onclick="applyTemplate('car')">
+                                    Use This Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goal Tips -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> SMART Goal Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong class="text-primary">Specific:</strong>
+                                <small class="text-muted d-block">Clear, well-defined goals are easier to achieve</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong class="text-success">Measurable:</strong>
+                                <small class="text-muted d-block">Set a specific dollar amount to track progress</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong class="text-warning">Achievable:</strong>
+                                <small class="text-muted d-block">Set realistic goals based on your income</small>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong class="text-info">Relevant:</strong>
+                                <small class="text-muted d-block">Choose goals that matter to your life</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong class="text-danger">Time-bound:</strong>
+                                <small class="text-muted d-block">Set a deadline to create urgency</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong class="text-secondary">Flexible:</strong>
+                                <small class="text-muted d-block">Be ready to adjust as circumstances change</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateGoalSuggestions() {
+    const category = document.getElementById('category').value;
+    const suggestions = {
+        'emergency': {
+            description: 'Build a safety net with 3-6 months of living expenses to protect against unexpected financial challenges.',
+            amount: 15000,
+            months: 12
+        },
+        'vacation': {
+            description: 'Create amazing memories with your partner by saving for that dream vacation you\'ve always talked about.',
+            amount: 3000,
+            months: 8
+        },
+        'home': {
+            description: 'Take the next step in your relationship by saving for a down payment on your future home together.',
+            amount: 50000,
+            months: 36
+        },
+        'car': {
+            description: 'Ensure reliable transportation by saving for a dependable vehicle that fits your lifestyle.',
+            amount: 20000,
+            months: 18
+        },
+        'education': {
+            description: 'Invest in your future by saving for education, certifications, or skill development opportunities.',
+            amount: 8000,
+            months: 12
+        },
+        'retirement': {
+            description: 'Secure your golden years by building a substantial retirement fund for financial independence.',
+            amount: 100000,
+            months: 60
+        },
+        'investment': {
+            description: 'Build long-term wealth through smart investments in stocks, bonds, or other financial instruments.',
+            amount: 25000,
+            months: 24
+        }
+    };
+    
+    const suggestion = suggestions[category];
+    if (suggestion) {
+        document.getElementById('description').value = suggestion.description;
+        document.getElementById('target_amount').value = suggestion.amount;
+        
+        // Set target date
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() + suggestion.months);
+        document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
+        
+        calculateGoal();
+    }
+}
+
+function applyTemplate(templateType) {
+    const templates = {
+        'emergency': {
+            title: 'Emergency Fund',
+            description: 'Build a safety net with 3-6 months of living expenses to protect against unexpected financial challenges.',
+            category: 'emergency',
+            amount: 15000,
+            months: 12
+        },
+        'vacation': {
+            title: 'Dream Vacation',
+            description: 'Create amazing memories with your partner by saving for that dream vacation you\'ve always talked about.',
+            category: 'vacation',
+            amount: 5000,
+            months: 10
+        },
+        'home': {
+            title: 'Home Down Payment',
+            description: 'Take the next step in your relationship by saving for a down payment on your future home together.',
+            category: 'home',
+            amount: 60000,
+            months: 48
+        },
+        'car': {
+            title: 'New Vehicle Fund',
+            description: 'Ensure reliable transportation by saving for a dependable vehicle that fits your lifestyle.',
+            category: 'car',
+            amount: 25000,
+            months: 20
+        }
+    };
+    
+    const template = templates[templateType];
+    if (template) {
+        document.getElementById('title').value = template.title;
+        document.getElementById('description').value = template.description;
+        document.getElementById('category').value = template.category;
+        document.getElementById('target_amount').value = template.amount;
+        
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() + template.months);
+        document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
+        
+        calculateGoal();
+    }
+}
+
+function calculateGoal() {
+    const amount = parseFloat(document.getElementById('target_amount').value) || 0;
+    const targetDate = document.getElementById('target_date').value;
+    
+    if (amount > 0 && targetDate) {
+        const today = new Date();
+        const target = new Date(targetDate);
+        const timeDiff = target.getTime() - today.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        if (daysDiff > 0) {
+            const monthsDiff = daysDiff / 30.44;
+            const weeksDiff = daysDiff / 7;
+            
+            const monthlyAmount = amount / monthsDiff;
+            const weeklyAmount = amount / weeksDiff;
+            
+            document.getElementById('monthlySavings').textContent = '$' + monthlyAmount.toFixed(0);
+            document.getElementById('weeklySavings').textContent = '$' + weeklyAmount.toFixed(0);
+            document.getElementById('goalCalculator').style.display = 'block';
+        } else {
+            document.getElementById('goalCalculator').style.display = 'none';
+        }
+    } else {
+        document.getElementById('goalCalculator').style.display = 'none';
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('target_amount').addEventListener('input', calculateGoal);
+    document.getElementById('target_date').addEventListener('change', calculateGoal);
+    
+    // Set minimum date to today
+    const today = new Date();
+    today.setDate(today.getDate() + 1); // Minimum is tomorrow
+    document.getElementById('target_date').min = today.toISOString().split('T')[0];
+    
+    // Check for template parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const template = urlParams.get('template');
+    if (template) {
+        applyTemplate(template);
+    }
+});
+</script>
+{% endblock %}

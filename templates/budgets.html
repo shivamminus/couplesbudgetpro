@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Budgets - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-pie"></i> Monthly Budgets</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('set_budget') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Set New Budget
+        </a>
+    </div>
+</div>
+
+<!-- Month Navigation -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-outline-primary" onclick="changeMonth(-1)">
+                        <i class="fas fa-chevron-left"></i> Previous Month
+                    </button>
+                    <h4 class="mb-0" id="currentMonth">Current Month Budget</h4>
+                    <button class="btn btn-outline-primary" onclick="changeMonth(1)">
+                        Next Month <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if budgets %}
+<!-- Budget Overview Cards -->
+<div class="row mb-4">
+    {% for budget in budgets %}
+    {% set status = budget_status.get(budget.category, {}) %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 {% if status.status == 'over' %}border-danger{% elif status.status == 'warning' %}border-warning{% else %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center
+                {% if status.status == 'over' %}bg-danger text-white
+                {% elif status.status == 'warning' %}bg-warning text-dark
+                {% else %}bg-success text-white{% endif %}">
+                <h6 class="mb-0">{{ budget.category.title() }}</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-link text-white" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Edit Budget</a></li>
+                        <li><a class="dropdown-item" href="#">View Details</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#">Delete Budget</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">Budgeted</small>
+                        <div class="h5 mb-0">£{{ "%.2f"|format(budget.amount) }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Spent</small>
+                        <div class="h5 mb-0">£{{ "%.2f"|format(status.spent if status else 0) }}</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>Progress</small>
+                        <small>{{ "%.1f"|format(status.percentage if status else 0) }}%</small>
+                    </div>
+                    <div class="progress">
+                        {% set percentage = status.percentage if status else 0 %}
+                        {% set capped_percentage = percentage if percentage <= 100 else 100 %}
+                        <div class="progress-bar 
+                            {% if status.status == 'over' %}bg-danger
+                            {% elif status.status == 'warning' %}bg-warning
+                            {% else %}bg-success{% endif %}"
+                             style="width: {{ capped_percentage }}%;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <small class="text-muted">Remaining</small>
+                        <div class="{% if status and status.remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                            £{{ "%.2f"|format(status.remaining if status else budget.amount) }}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Alert at</small>
+                        <div class="text-muted">{{ budget.alert_threshold }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Budget Summary Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Budget Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Budget</th>
+                        <th>Spent</th>
+                        <th>Remaining</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for budget in budgets %}
+                    {% set status = budget_status.get(budget.category, {}) %}
+                    <tr>
+                        <td>
+                            <strong>{{ budget.category.title() }}</strong>
+                            <br><small class="text-muted">Alert at {{ budget.alert_threshold }}%</small>
+                        </td>
+                        <td>£{{ "%.2f"|format(budget.amount) }}</td>
+                        <td>£{{ "%.2f"|format(status.spent if status else 0) }}</td>
+                        <td class="{% if status and status.remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                            £{{ "%.2f"|format(status.remaining if status else budget.amount) }}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                {% set percentage = status.percentage if status else 0 %}
+                                {% set capped_percentage = percentage if percentage <= 100 else 100 %}
+                                <div class="progress-bar 
+                                    {% if status.status == 'over' %}bg-danger
+                                    {% elif status.status == 'warning' %}bg-warning
+                                    {% else %}bg-success{% endif %}"
+                                     style="width: {{ capped_percentage }}%">
+                                    {{ "%.1f"|format(percentage) }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if status.status == 'over' %}
+                                <span class="badge bg-danger">Over Budget</span>
+                            {% elif status.status == 'warning' %}
+                                <span class="badge bg-warning text-dark">Warning</span>
+                            {% else %}
+                                <span class="badge bg-success">On Track</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editBudget('{{ budget.id }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-info" onclick="viewDetails('{{ budget.category }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteBudget('{{ budget.id }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Insights -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Alerts</h6>
+            </div>
+            <div class="card-body">
+                {% set alerts = [] %}
+                {% for budget in budgets %}
+                    {% set status = budget_status.get(budget.category, {}) %}
+                    {% if status and status.status != 'good' %}
+                        {% set _ = alerts.append({'budget': budget, 'status': status}) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if alerts %}
+                    {% for alert in alerts %}
+                    <div class="alert alert-{% if alert.status.status == 'over' %}danger{% else %}warning{% endif %} py-2">
+                        <strong>{{ alert.budget.category.title() }}:</strong>
+                        {% if alert.status.status == 'over' %}
+                            Over budget by £{{ "%.2f"|format(-alert.status.remaining) }}
+                        {% else %}
+                            {{ "%.1f"|format(alert.status.percentage) }}% of budget used
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <p>All budgets are on track!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Monthly Totals</h6>
+            </div>
+            <div class="card-body">
+                {% set total_budget = budgets|map(attribute='amount')|sum %}
+                {% set total_spent = budget_status.values()|map(attribute='spent')|sum %}
+                
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <h4 class="text-primary">£{{ "%.0f"|format(total_budget) }}</h4>
+                        <small class="text-muted">Total Budget</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-danger">£{{ "%.0f"|format(total_spent) }}</h4>
+                        <small class="text-muted">Total Spent</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="{% if total_budget - total_spent < 0 %}text-danger{% else %}text-success{% endif %}">
+                            £{{ "%.0f"|format(total_budget - total_spent) }}
+                        </h4>
+                        <small class="text-muted">Remaining</small>
+                    </div>
+                </div>
+                
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar bg-info" 
+                         style="width: {{ (total_spent / total_budget * 100) if total_budget > 0 else 0 }}%">
+                        {{ "%.1f"|format((total_spent / total_budget * 100) if total_budget > 0 else 0) }}%
+                    </div>
+                </div>
+                <small class="text-muted">Overall budget usage</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-5">
+    <i class="fas fa-chart-pie fa-5x text-muted mb-4"></i>
+    <h4 class="text-muted">No budgets set for this month</h4>
+    <p class="text-muted mb-4">Create your first budget to start tracking your spending limits.</p>
+    <a href="{{ url_for('set_budget') }}" class="btn btn-success btn-lg">
+        <i class="fas fa-plus"></i> Create Your First Budget
+    </a>
+</div>
+
+<!-- Getting Started Tips -->
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-bullseye fa-3x text-primary mb-3"></i>
+                <h6>Set Realistic Goals</h6>
+                <p class="text-muted small">Start with realistic budget amounts based on your spending history.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-bell fa-3x text-warning mb-3"></i>
+                <h6>Use Alert Thresholds</h6>
+                <p class="text-muted small">Set alert thresholds to get notified before you go over budget.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-sync fa-3x text-success mb-3"></i>
+                <h6>Review Regularly</h6>
+                <p class="text-muted small">Review and adjust your budgets monthly based on your actual spending.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function changeMonth(direction) {
+    // This would typically make an AJAX request to change the month view
+    alert('Month navigation would be implemented here. Direction: ' + direction);
+}
+
+function editBudget(budgetId) {
+    // This would open an edit form or modal
+    alert('Edit budget functionality would be implemented here for budget ID: ' + budgetId);
+}
+
+function viewDetails(category) {
+    // This would show detailed spending breakdown for the category
+    alert('View details functionality would be implemented here for category: ' + category);
+}
+
+function deleteBudget(budgetId) {
+    if (confirm('Are you sure you want to delete this budget?')) {
+        // This would make an AJAX request to delete the budget
+        alert('Delete functionality would be implemented here for budget ID: ' + budgetId);
+    }
+}
+</script>
+{% endblock %}

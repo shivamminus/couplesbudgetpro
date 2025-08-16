@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Goals - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2"><i class="fas fa-flag"></i> Financial Goals</h1>
+        {% if partner %}
+            <small class="text-muted">
+                <i class="fas fa-heart text-danger"></i> 
+                Combined goals with {{ partner.username }}
+            </small>
+        {% endif %}
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('add_goal') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New Goal
+        </a>
+    </div>
+</div>
+
+<!-- Goals Overview Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ active_goals|length }}</h3>
+                <p class="mb-0">Active Goals</p>
+                <small class="opacity-75">In Progress</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card warning-card">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ completed_goals|length }}</h3>
+                <p class="mb-0">Completed</p>
+                <small class="opacity-75">All Time</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-0">£{{ active_goals|map(attribute='target_amount')|sum|round(0) }}</h3>
+                <p class="mb-0">Target Amount</p>
+                <small class="opacity-75">Total Goals</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-0">£{{ active_goals|map(attribute='current_amount')|sum|round(0) }}</h3>
+                <p class="mb-0">Saved So Far</p>
+                <small class="opacity-75">Total Progress</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if active_goals %}
+<!-- Active Goals -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-play-circle"></i> Active Goals</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for goal in active_goals %}
+            <div class="col-lg-6 mb-4">
+                <div class="card border-{% if goal.target_date < datetime.now().date() %}danger{% elif (goal.target_date - datetime.now().date()).days <= 30 %}warning{% else %}primary{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">{{ goal.title }}</h6>
+                            <small class="text-muted">{{ goal.category.title() }}</small>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Add Money</a></li>
+                                <li><a class="dropdown-item" href="#">Edit Goal</a></li>
+                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-success" href="#">Mark Complete</a></li>
+                                <li><a class="dropdown-item text-danger" href="#">Delete Goal</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if goal.description %}
+                        <p class="card-text text-muted mb-3">{{ goal.description }}</p>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Progress</span>
+                                <span>£{{ "%.0f"|format(goal.current_amount) }} / £{{ "%.0f"|format(goal.target_amount) }}</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 12px;">
+                                <div class="progress-bar 
+                                    {% if goal.current_amount >= goal.target_amount %}bg-success
+                                    {% elif (goal.current_amount / goal.target_amount) > 0.75 %}bg-info
+                                    {% elif (goal.current_amount / goal.target_amount) > 0.5 %}bg-warning
+                                    {% else %}bg-primary{% endif %}"
+                                     style="width: {{ [(goal.current_amount / goal.target_amount * 100), 100]|min }}%">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ "%.1f"|format((goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0) }}% complete</small>
+                                <small class="text-muted">£{{ "%.0f"|format(goal.target_amount - goal.current_amount) }} remaining</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Target Date</small>
+                                <div class="{% if goal.target_date < datetime.now().date() %}text-danger{% elif (goal.target_date - datetime.now().date()).days <= 30 %}text-warning{% else %}text-muted{% endif %}">
+                                    {{ goal.target_date.strftime('%B %d, %Y') }}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Days Remaining</small>
+                                <div class="{% if goal.target_date < datetime.now().date() %}text-danger{% elif (goal.target_date - datetime.now().date()).days <= 30 %}text-warning{% else %}text-muted{% endif %}">
+                                    {% set days_remaining = (goal.target_date - datetime.now().date()).days %}
+                                    {% if days_remaining < 0 %}
+                                        {{ -days_remaining }} days overdue
+                                    {% else %}
+                                        {{ days_remaining }} days
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if partner %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">Created by:</small>
+                                <div class="text-muted">
+                                    {% if goal.user_id == current_user.id %}
+                                        <i class="fas fa-user"></i> You
+                                    {% else %}
+                                        <i class="fas fa-heart text-danger"></i> {{ partner.username }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Monthly Savings Recommendation -->
+                        {% set months_remaining = ((goal.target_date - datetime.now().date()).days / 30.44)|round(1) %}
+                        {% if months_remaining > 0 %}
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <small class="text-muted">Recommended monthly savings:</small>
+                            <strong class="text-primary">£{{ "%.0f"|format((goal.target_amount - goal.current_amount) / months_remaining) }}</strong>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-primary btn-sm" onclick="addMoney({{ goal.id }})">
+                                    <i class="fas fa-plus"></i> Add Money
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="editGoal({{ goal.id }})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if completed_goals %}
+<!-- Completed Goals -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-check-circle text-success"></i> Completed Goals</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for goal in completed_goals %}
+            <div class="col-lg-4 mb-3">
+                <div class="card border-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ goal.title }}</h6>
+                                <small class="text-muted">{{ goal.category.title() }}</small>
+                            </div>
+                            <i class="fas fa-trophy text-warning"></i>
+                        </div>
+                        <div class="text-success">
+                            <strong>£{{ "%.0f"|format(goal.current_amount) }}</strong>
+                            <small class="text-muted">of £{{ "%.0f"|format(goal.target_amount) }}</small>
+                        </div>
+                        <small class="text-muted">Completed on {{ goal.target_date.strftime('%m/%d/%Y') }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not active_goals and not completed_goals %}
+<!-- Empty State -->
+<div class="text-center py-5">
+    <i class="fas fa-flag fa-5x text-muted mb-4"></i>
+    <h4 class="text-muted">No financial goals yet</h4>
+    <p class="text-muted mb-4">Set your first financial goal to start building your future together.</p>
+    <a href="{{ url_for('add_goal') }}" class="btn btn-success btn-lg">
+        <i class="fas fa-plus"></i> Create Your First Goal
+    </a>
+</div>
+
+<!-- Goal Ideas -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="text-center mb-4">Goal Ideas to Get You Started</h4>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                <h6>Emergency Fund</h6>
+                <p class="text-muted small">Save 3-6 months of expenses for unexpected situations.</p>
+                <button class="btn btn-outline-primary btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-umbrella-beach fa-3x text-success mb-3"></i>
+                <h6>Dream Vacation</h6>
+                <p class="text-muted small">Plan and save for that perfect getaway together.</p>
+                <button class="btn btn-outline-success btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-home fa-3x text-warning mb-3"></i>
+                <h6>Home Down Payment</h6>
+                <p class="text-muted small">Save for your first home or upgrade to a bigger place.</p>
+                <button class="btn btn-outline-warning btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-car fa-3x text-info mb-3"></i>
+                <h6>New Car</h6>
+                <p class="text-muted small">Save up for a reliable vehicle or your dream car.</p>
+                <button class="btn btn-outline-info btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-graduation-cap fa-3x text-secondary mb-3"></i>
+                <h6>Education Fund</h6>
+                <p class="text-muted small">Invest in your future with education or skill development.</p>
+                <button class="btn btn-outline-secondary btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-danger mb-3"></i>
+                <h6>Investment Portfolio</h6>
+                <p class="text-muted small">Build wealth through smart investing strategies.</p>
+                <button class="btn btn-outline-danger btn-sm">Start This Goal</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Goal Tips -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Goal Setting Tips</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <h6 class="text-primary">Be Specific</h6>
+                <p class="small text-muted">Set clear, measurable goals with exact amounts and deadlines.</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-success">Start Small</h6>
+                <p class="small text-muted">Begin with achievable goals to build confidence and momentum.</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-warning">Automate Savings</h6>
+                <p class="small text-muted">Set up automatic transfers to make saving effortless.</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-info">Track Progress</h6>
+                <p class="small text-muted">Regular monitoring keeps you motivated and on track.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addMoney(goalId) {
+    const amount = prompt('How much would you like to add to this goal?');
+    if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+        // This would typically make an AJAX request to add money to the goal
+        alert('Added £' + amount + ' to goal ID: ' + goalId);
+        // location.reload(); // Refresh to show updated progress
+    }
+}
+
+function editGoal(goalId) {
+    // This would typically redirect to an edit page or open a modal
+    alert('Edit goal functionality would be implemented here for goal ID: ' + goalId);
+}
+
+// Quick goal creation from predefined templates
+function createQuickGoal(type) {
+    const goalTemplates = {
+        'emergency': {
+            title: 'Emergency Fund',
+            description: '3-6 months of living expenses',
+            category: 'emergency',
+            amount: 10000
+        },
+        'vacation': {
+            title: 'Dream Vacation',
+            description: 'Save for our perfect getaway',
+            category: 'vacation',
+            amount: 3000
+        },
+        'home': {
+            title: 'Home Down Payment',
+            description: 'Save for our first home',
+            category: 'home',
+            amount: 50000
+        },
+        'car': {
+            title: 'New Car',
+            description: 'Save for a reliable vehicle',
+            category: 'car',
+            amount: 15000
+        },
+        'education': {
+            title: 'Education Fund',
+            description: 'Invest in our future education',
+            category: 'education',
+            amount: 5000
+        },
+        'investment': {
+            title: 'Investment Portfolio',
+            description: 'Build long-term wealth',
+            category: 'investment',
+            amount: 25000
+        }
+    };
+    
+    const template = goalTemplates[type];
+    if (template) {
+        // This would populate a form with the template data
+        window.location.href = "{{ url_for('add_goal') }}?template=" + type;
+    }
+}
+
+// Add event listeners to quick goal buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const quickGoalButtons = document.querySelectorAll('[class*="btn-outline-"]');
+    quickGoalButtons.forEach((button, index) => {
+        const goalTypes = ['emergency', 'vacation', 'home', 'car', 'education', 'investment'];
+        if (goalTypes[index]) {
+            button.onclick = function() { createQuickGoal(goalTypes[index]); };
+        }
+    });
+});
+</script>
+{% endblock %}

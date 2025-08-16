@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        {% if partner %}
+            <small class="text-muted">
+                <i class="fas fa-heart text-danger"></i> 
+                Combined view with {{ partner.username }}
+            </small>
+        {% endif %}
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('add_expense') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Expense
+            </a>
+            <a href="{{ url_for('set_budget') }}" class="btn btn-sm btn-success">
+                <i class="fas fa-bullseye"></i> Set Budget
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">This Month</h5>
+                        <h3 class="mb-0">£{{ "%.2f"|format(category_spending.values()|sum) }}</h3>
+                        <small>Total Spent</small>
+                    </div>
+                    <i class="fas fa-credit-card fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card {% if budget_status %}{% set over_budget = [] %}{% for status in budget_status.values() %}{% if status.status == 'over' %}{% set _ = over_budget.append(1) %}{% endif %}{% endfor %}{% if over_budget %}danger-card{% else %}metric-card{% endif %}{% else %}metric-card{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Budget Status</h5>
+                        <h3 class="mb-0">{{ budget_status|length }}</h3>
+                        <small>Categories Set</small>
+                    </div>
+                    <i class="fas fa-chart-pie fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card warning-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Active Goals</h5>
+                        <h3 class="mb-0">{{ goals|length }}</h3>
+                        <small>In Progress</small>
+                    </div>
+                    <i class="fas fa-flag fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Suggestions</h5>
+                        <h3 class="mb-0">{{ savings_suggestions|length + investment_recommendations|length }}</h3>
+                        <small>Available</small>
+                    </div>
+                    <i class="fas fa-lightbulb fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Expenses -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-receipt"></i> Recent Expenses</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr class="expense-priority-{{ expense.priority }}">
+                                <td>{{ expense.date.strftime('%m/%d') }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ expense.category.title() }}</span>
+                                </td>
+                                <td>£{{ "%.2f"|format(expense.amount) }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if expense.priority == 'high' %}bg-danger
+                                        {% elif expense.priority == 'medium' %}bg-warning text-dark
+                                        {% else %}bg-success{% endif %}">
+                                        {{ expense.priority.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" 
+                                           class="btn btn-outline-primary btn-sm" 
+                                           title="Edit expense">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center">
+                    <a href="{{ url_for('expenses') }}" class="btn btn-outline-primary">View All Expenses</a>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No expenses yet</h5>
+                    <p class="text-muted">Start by adding your first expense</p>
+                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">Add Expense</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Budget Overview -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Budget Overview</h5>
+            </div>
+            <div class="card-body">
+                {% if budget_status %}
+                {% for category, status in budget_status.items() %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold">{{ category.title() }}</span>
+                        <span class="text-muted small">£{{ "%.0f"|format(status.spent) }} / £{{ "%.0f"|format(status.budgeted) }}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar 
+                            {% if status.status == 'over' %}bg-danger
+                            {% elif status.status == 'warning' %}bg-warning
+                            {% else %}bg-success{% endif %}"
+                             style="width: {{ [status.percentage, 100]|min }}%"
+                             role="progressbar">
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ "%.1f"|format(status.percentage) }}% used</small>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                    <a href="{{ url_for('budgets') }}" class="btn btn-outline-primary">Manage Budgets</a>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No budgets set</h6>
+                    <a href="{{ url_for('set_budget') }}" class="btn btn-primary">Set Budget</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Goals and Suggestions Row -->
+<div class="row">
+    <!-- Financial Goals -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-flag"></i> Financial Goals</h5>
+            </div>
+            <div class="card-body">
+                {% if goals %}
+                {% for goal in goals[:3] %}
+                <div class="goal-progress mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0">{{ goal.title }}</h6>
+                        <span class="text-muted small">£{{ "%.0f"|format(goal.current_amount) }} / £{{ "%.0f"|format(goal.target_amount) }}</span>
+                    </div>
+                    <div class="progress mb-1">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 }}%"
+                             role="progressbar">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">{{ goal.category.title() }}</small>
+                        <small class="text-muted">Due: {{ goal.target_date.strftime('%m/%d/%Y') }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                    <a href="{{ url_for('goals') }}" class="btn btn-outline-primary">View All Goals</a>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-flag fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No goals set</h6>
+                    <a href="{{ url_for('add_goal') }}" class="btn btn-primary">Add Goal</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Suggestions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> AI Suggestions</h5>
+            </div>
+            <div class="card-body">
+                {% if savings_suggestions or investment_recommendations %}
+                
+                {% for suggestion in savings_suggestions[:2] %}
+                <div class="suggestion-card p-3 mb-3 rounded">
+                    <h6 class="mb-1">{{ suggestion.category }} Savings</h6>
+                    <p class="mb-1 small">{{ suggestion.suggestion }}</p>
+                    <small class="text-success"><strong>Potential Savings: £{{ "%.0f"|format(suggestion.potential_savings) }}/month</strong></small>
+                </div>
+                {% endfor %}
+                
+                {% for recommendation in investment_recommendations[:1] %}
+                <div class="investment-card p-3 mb-3 rounded">
+                    <h6 class="mb-1">{{ recommendation.type }}</h6>
+                    <p class="mb-1 small">{{ recommendation.description }}</p>
+                    <small class="text-success"><strong>Expected Return: {{ recommendation.expected_return }}</strong></small>
+                </div>
+                {% endfor %}
+                
+                <div class="text-center">
+                    <a href="{{ url_for('suggestions') }}" class="btn btn-outline-primary">View All Suggestions</a>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Add some expenses to get personalized suggestions</h6>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Spending Chart -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Monthly Spending by Category</h5>
+            </div>
+            <div class="card-body">
+                {% if category_spending %}
+                <canvas id="spendingChart" width="400" height="100"></canvas>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No spending data available</h6>
+                    <p class="text-muted">Start adding expenses to see your spending breakdown</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if category_spending %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('spendingChart').getContext('2d');
+    const spendingData = {{ category_spending|tojson }};
+    
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(spendingData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+            datasets: [{
+                data: Object.values(spendingData),
+                backgroundColor: [
+                    '#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6',
+                    '#1abc9c', '#34495e', '#f1c40f', '#e67e22', '#95a5a6'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Find Partner - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-search"></i> Find Your Financial Partner</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-search"></i> Search Users</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ form.search_query(class="form-control", placeholder="Search by username or email...") }}
+                                {% if form.search_query.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.search_query.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.submit(class="btn btn-primary w-100") }}
+                            </div>
+                        </div>
+                        <small class="form-text text-muted mt-2">
+                            <i class="fas fa-info-circle"></i> 
+                            Search for your partner by their username or email address.
+                        </small>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            {% if users %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Search Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for user in users %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ user.username }}</h6>
+                                            <small class="text-muted">{{ user.email }}</small>
+                                            <br>
+                                            <small class="text-muted">Member since {{ user.created_at.strftime('%B %Y') }}</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <img src="https://via.placeholder.com/50/007bff/ffffff?text={{ user.username[0]|upper }}" 
+                                                 alt="Profile Picture" 
+                                                 class="rounded-circle"
+                                                 style="width: 50px; height: 50px;">
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('send_partner_request', user_id=user.id) }}" 
+                                           class="btn btn-success btn-sm w-100"
+                                           onclick="return confirm('Send partner request to {{ user.username }}?')">
+                                            <i class="fas fa-heart"></i> Send Partner Request
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Sidebar - Pending Requests -->
+        <div class="col-md-4">
+            
+            <!-- Received Requests -->
+            {% if pending_received %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-envelope"></i> Received Requests ({{ pending_received|length }})</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% for request in pending_received %}
+                    <div class="border-bottom p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ request.sender.username }}</strong>
+                                <br>
+                                <small class="text-muted">{{ request.sender.email }}</small>
+                                <br>
+                                <small class="text-muted">{{ request.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                            </div>
+                            <img src="https://via.placeholder.com/40/28a745/ffffff?text={{ request.sender.username[0]|upper }}" 
+                                 alt="Profile" 
+                                 class="rounded-circle"
+                                 style="width: 40px; height: 40px;">
+                        </div>
+                        
+                        {% if request.message %}
+                        <p class="mb-2 text-muted small">{{ request.message }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('respond_partner_request', request_id=request.id, action='accept') }}" 
+                               class="btn btn-success btn-sm flex-fill"
+                               onclick="return confirm('Accept partner request from {{ request.sender.username }}?')">
+                                <i class="fas fa-check"></i> Accept
+                            </a>
+                            <a href="{{ url_for('respond_partner_request', request_id=request.id, action='reject') }}" 
+                               class="btn btn-danger btn-sm flex-fill"
+                               onclick="return confirm('Reject partner request from {{ request.sender.username }}?')">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sent Requests -->
+            {% if pending_sent %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-clock"></i> Sent Requests ({{ pending_sent|length }})</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% for request in pending_sent %}
+                    <div class="border-bottom p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ request.receiver.username }}</strong>
+                                <br>
+                                <small class="text-muted">{{ request.receiver.email }}</small>
+                                <br>
+                                <small class="text-muted">Sent {{ request.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                            </div>
+                            <img src="https://via.placeholder.com/40/ffc107/000000?text={{ request.receiver.username[0]|upper }}" 
+                                 alt="Profile" 
+                                 class="rounded-circle"
+                                 style="width: 40px; height: 40px;">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-clock"></i> Pending Response
+                            </span>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('cancel_partner_request', request_id=request.id) }}" 
+                               class="btn btn-outline-danger btn-sm"
+                               onclick="return confirm('Cancel partner request to {{ request.receiver.username }}?')">
+                                <i class="fas fa-times"></i> Cancel Request
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Help Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle"></i> How Partner Linking Works</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <p><strong>1. Search:</strong> Find your partner by username or email</p>
+                        <p><strong>2. Request:</strong> Send a partner request</p>
+                        <p><strong>3. Accept:</strong> They accept your request</p>
+                        <p><strong>4. Share:</strong> You both see combined financial data</p>
+                        
+                        <hr>
+                        <h6>Benefits of Partner Linking:</h6>
+                        <ul class="mb-0">
+                            <li>Shared dashboard with combined data</li>
+                            <li>Track who adds what expenses</li>
+                            <li>Combined budgets and goals</li>
+                            <li>Better financial transparency</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh pending requests every 30 seconds
+setInterval(function() {
+    const pendingCount = {{ (pending_received|length + pending_sent|length) }};
+    if (pendingCount > 0) {
+        // Only refresh if there are pending requests
+        setTimeout(() => window.location.reload(), 30000);
+    }
+}, 30000);
+
+// Show toast notifications for successful actions
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            showToast('{{ message }}', 'info');
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Set Budget - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-bullseye"></i> Set Budget</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.category.label(class="form-label") }}
+                            {{ form.category(class="form-select") }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.category.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.amount.label(class="form-label") }}
+                            {{ form.amount(class="form-control", step="0.01", min="0") }}
+                            {% if form.amount.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.month.label(class="form-label") }}
+                            {{ form.month(class="form-select") }}
+                            {% if form.month.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.month.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.year.label(class="form-label") }}
+                            {{ form.year(class="form-select") }}
+                            {% if form.year.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.year.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.alert_threshold.label(class="form-label") }}
+                        {{ form.alert_threshold(class="form-control", step="0.1", min="1", max="100") }}
+                        {% if form.alert_threshold.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.alert_threshold.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">You'll receive an alert when spending reaches this percentage of your budget</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('budgets') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.submit(class="btn btn-success w-100") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Budget Calculator -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-calculator"></i> Budget Calculator</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Use the 50/30/20 rule as a starting point:</p>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Monthly Income</label>
+                        <input type="number" class="form-control" id="monthlyIncome" placeholder="Enter your monthly income" onchange="calculateBudgets()">
+                    </div>
+                </div>
+                
+                <div class="row" id="budgetCalculations" style="display: none;">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h6>Needs (50%)</h6>
+                                <h4 id="needsBudget">$0</h4>
+                                <small>Housing, utilities, food, transportation</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h6>Wants (30%)</h6>
+                                <h4 id="wantsBudget">$0</h4>
+                                <small>Entertainment, dining out, shopping</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h6>Savings (20%)</h6>
+                                <h4 id="savingsBudget">$0</h4>
+                                <small>Emergency fund, investments, goals</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Budget Tips -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Budgeting Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Start Small</h6>
+                        <p class="small text-muted">Begin with a few key categories and expand gradually.</p>
+                        
+                        <h6>Be Realistic</h6>
+                        <p class="small text-muted">Base budgets on actual spending patterns, not ideal ones.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Review Monthly</h6>
+                        <p class="small text-muted">Adjust budgets based on actual spending and life changes.</p>
+                        
+                        <h6>Use Alerts</h6>
+                        <p class="small text-muted">Set alert thresholds to catch overspending early.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateBudgets() {
+    const income = parseFloat(document.getElementById('monthlyIncome').value);
+    
+    if (income && income > 0) {
+        const needs = income * 0.50;
+        const wants = income * 0.30;
+        const savings = income * 0.20;
+        
+        document.getElementById('needsBudget').textContent = '$' + needs.toFixed(0);
+        document.getElementById('wantsBudget').textContent = '$' + wants.toFixed(0);
+        document.getElementById('savingsBudget').textContent = '$' + savings.toFixed(0);
+        
+        document.getElementById('budgetCalculations').style.display = 'block';
+    } else {
+        document.getElementById('budgetCalculations').style.display = 'none';
+    }
+}
+
+// Set default month and year to current
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const monthSelect = document.querySelector('#month');
+    const yearSelect = document.querySelector('#year');
+    
+    if (monthSelect && !monthSelect.value) {
+        monthSelect.value = (now.getMonth() + 1).toString();
+    }
+    
+    if (yearSelect && !yearSelect.value) {
+        yearSelect.value = now.getFullYear().toString();
+    }
+});
+</script>
+{% endblock %}

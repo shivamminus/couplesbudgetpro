@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - CouplesBudget Pro{% endblock %}
+
+{% block content %}
+<div class="row min-vh-100 align-items-center">
+    <div class="col-lg-6">
+        <div class="text-center text-lg-start">
+            <h1 class="display-4 fw-bold text-primary mb-4">
+                <i class="fas fa-wallet"></i> CouplesBudget Pro
+            </h1>
+            <p class="lead text-muted mb-4">
+                The ultimate financial management app designed for couples. Track expenses, set budgets, achieve goals together, and get AI-powered insights for smart saving and investing.
+            </p>
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                            <h5>Smart Analytics</h5>
+                            <p class="small text-muted">Advanced spending analysis with AI-powered insights</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-piggy-bank fa-2x text-success mb-2"></i>
+                            <h5>Goal Tracking</h5>
+                            <p class="small text-muted">Set and achieve financial goals together</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-lightbulb fa-2x text-warning mb-2"></i>
+                            <h5>AI Suggestions</h5>
+                            <p class="small text-muted">Personalized saving and investment recommendations</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x text-info mb-2"></i>
+                            <h5>Couple Focused</h5>
+                            <p class="small text-muted">Designed specifically for couples managing finances together</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                    <i class="fas fa-user-plus"></i> Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='dashboardpreview.png') }}" 
+                 alt="Dashboard Preview" 
+                 class="img-fluid rounded shadow-lg">
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5 border-top">
+    <div class="col-12">
+        <h2 class="text-center mb-5">Key Features</h2>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-receipt fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Expense Tracking</h5>
+                <p class="card-text">Track all your expenses with detailed categories, subcategories, and tags. Set recurring expenses and priorities.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-bullseye fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Budget Management</h5>
+                <p class="card-text">Set monthly budgets for different categories with customizable alert thresholds and real-time monitoring.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Visual Analytics</h5>
+                <p class="card-text">Beautiful charts and graphs to visualize your spending patterns, trends, and budget performance.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-flag fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Financial Goals</h5>
+                <p class="card-text">Set and track financial goals like emergency funds, vacations, home purchases, and retirement planning.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-robot fa-3x text-danger mb-3"></i>
+                <h5 class="card-title">AI-Powered Insights</h5>
+                <p class="card-text">Get personalized recommendations for saving money and smart investment opportunities.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-mobile-alt fa-3x text-secondary mb-3"></i>
+                <h5 class="card-title">Responsive Design</h5>
+                <p class="card-text">Access your financial data anywhere with our mobile-friendly, responsive web application.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5 border-top">
+    <div class="col-12 text-center">
+        <h2 class="mb-4">Ready to Take Control of Your Finances?</h2>
+        <p class="lead text-muted mb-4">Join thousands of couples who are successfully managing their money together.</p>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-rocket"></i> Start Your Journey Today
+        </a>
+    </div>
+</div>
+{% endblock %}
