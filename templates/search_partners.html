@@ -9,7 +9,7 @@
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-search"></i> Find Your Financial Partner</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
-                    <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('profile.profile') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Profile
                     </a>
                 </div>
@@ -73,7 +73,7 @@
                                         </div>
                                     </div>
                                     <div class="mt-3">
-                                        <a href="{{ url_for('send_partner_request', user_id=user.id) }}" 
+                                        <a href="{{ url_for('profile.send_partner_request', user_id=user.id) }}" 
                                            class="btn btn-success btn-sm w-100"
                                            onclick="return confirm('Send partner request to {{ user.username }}?')">
                                             <i class="fas fa-heart"></i> Send Partner Request
@@ -121,12 +121,12 @@
                         {% endif %}
                         
                         <div class="d-flex gap-2">
-                            <a href="{{ url_for('respond_partner_request', request_id=request.id, action='accept') }}" 
+                            <a href="{{ url_for('profile.respond_partner_request', request_id=request.id, action='accept') }}" 
                                class="btn btn-success btn-sm flex-fill"
                                onclick="return confirm('Accept partner request from {{ request.sender.username }}?')">
                                 <i class="fas fa-check"></i> Accept
                             </a>
-                            <a href="{{ url_for('respond_partner_request', request_id=request.id, action='reject') }}" 
+                            <a href="{{ url_for('profile.respond_partner_request', request_id=request.id, action='reject') }}" 
                                class="btn btn-danger btn-sm flex-fill"
                                onclick="return confirm('Reject partner request from {{ request.sender.username }}?')">
                                 <i class="fas fa-times"></i> Reject
@@ -168,7 +168,7 @@
                         </div>
                         
                         <div class="d-grid">
-                            <a href="{{ url_for('cancel_partner_request', request_id=request.id) }}" 
+                            <a href="{{ url_for('profile.cancel_partner_request', request_id=request.id) }}" 
                                class="btn btn-outline-danger btn-sm"
                                onclick="return confirm('Cancel partner request to {{ request.receiver.username }}?')">
                                 <i class="fas fa-times"></i> Cancel Request

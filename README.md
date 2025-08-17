@@ -1,133 +1,109 @@
-# CouplesBudget Pro
+# Money Management App
 
-A comprehensive Flask web application designed for couples to manage their monthly expenses, budgets, and financial goals together. Features AI-powered insights, detailed analytics, and personalized recommendations for saving and investing.
+A comprehensive personal finance management application built with Flask, designed to help users track expenses, manage budgets, and gain insights into their financial habits. Features secure user authentication, expense categorization, and analytics dashboard.
 
 ## Features
 
-### 💰 Expense Tracking
-- Track all expenses with detailed categories and subcategories
-- Set recurring expenses (monthly, weekly, yearly)
-- Priority levels for better expense management
-- Custom tags for advanced filtering
-- Import/export functionality
-
-### 📊 Budget Management
-- Set monthly budgets for different categories
-- Real-time budget monitoring with visual indicators
-- Customizable alert thresholds
-- Budget vs actual spending analysis
-- Historical budget performance
-
-### 🎯 Financial Goals
-- Create and track multiple financial goals
-- Progress visualization with completion percentages
-- Goal categories: Emergency fund, vacation, home purchase, etc.
-- Automated savings recommendations
-- Goal achievement celebrations
-
-### 📈 Advanced Analytics
-- Interactive charts and graphs
-- Spending trend analysis
-- Category breakdowns and comparisons
-- Monthly and yearly financial reports
-- Export analytics data
-
-### 🤖 AI-Powered Insights
-- Personalized money-saving suggestions
-- Investment recommendations based on spending patterns
-- Financial health score
-- Predictive analytics for future spending
-- Custom financial advice
-
-### 👥 Couple-Focused Features
-- Shared expense tracking
-- Joint budget management
-- Combined financial goals
-- Partner spending insights
-- Collaborative financial planning
+- **User Authentication**: Secure registration, login, and profile management
+- **Expense Tracking**: Add, edit, and categorize expenses with detailed descriptions
+- **Category Management**: Organize expenses with customizable categories
+- **Dashboard Analytics**: Visual insights into spending patterns and trends
+- **Admin Panel**: Administrative interface for user and system management
+- **Responsive Design**: Mobile-friendly interface for on-the-go expense tracking
+- **Secure**: Password hashing, CSRF protection, and secure session management
 
 ## Technology Stack
 
-- **Backend**: Flask, SQLAlchemy, Flask-Login
-- **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
-- **Database**: SQLite (development), PostgreSQL (production ready)
-- **Charts**: Plotly.js for interactive visualizations
-- **AI/ML**: scikit-learn for predictive analytics
-- **Forms**: Flask-WTF, WTForms
+- **Backend**: Python 3.8+, Flask, SQLAlchemy
+- **Database**: SQLite (development), MySQL (production)
+- **Frontend**: HTML5, CSS3, Bootstrap 4, Chart.js
+- **Security**: Flask-WTF (CSRF), Werkzeug (password hashing)
+- **Testing**: Python unittest framework
 
-## Installation
+## Quick Start
+
+### Local Development
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/yourusername/moneymanagementapp.git
    cd moneymanagementapp
    ```
 
-2. **Create a virtual environment**
+2. **Create virtual environment**
    ```bash
    python -m venv venv
+   venv\Scripts\activate  # Windows
+   # or
+   source venv/bin/activate  # macOS/Linux
    ```
 
-3. **Activate the virtual environment**
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-
-4. **Install dependencies**
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-5. **Set environment variables** (optional)
-   ```bash
-   # For enhanced security in production
-   export SECRET_KEY=your-secret-key-here
-   export DATABASE_URL=your-database-url-here
-   export OPENAI_API_KEY=your-openai-api-key-here
+4. **Set up environment variables**
+   Create a `.env` file in the root directory:
+   ```
+   FLASK_APP=run.py
+   FLASK_ENV=development
+   SECRET_KEY=your-secret-key-here
+   DATABASE_URL=sqlite:///money_management.db
    ```
 
-6. **Initialize the database**
+5. **Initialize the database**
    ```bash
-   python -c "from app import app, db; app.app_context().push(); db.create_all()"
+   python run.py
    ```
+   The app will create the database and tables automatically on first run.
 
-7. **Run the application**
+6. **Run the application**
    ```bash
-   python app.py
+   python run.py
    ```
+   Open your browser to `http://localhost:5000`
 
-8. **Access the application**
-   Open your browser and go to `http://localhost:5000`
+### Production Deployment (PythonAnywhere)
 
-## Usage
+For detailed deployment instructions to PythonAnywhere, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
-### Getting Started
-1. Register for a new account or login with existing credentials
-2. Add your first expense to start tracking your spending
-3. Set up budgets for different expense categories
-4. Create financial goals to work towards
-5. Explore analytics and AI suggestions for better financial management
+## Project Structure
 
-### Key Features Usage
-
-#### Adding Expenses
-- Click "Add Expense" from the dashboard or sidebar
-- Fill in the amount, description, category, and other details
-- Set recurring expenses for regular payments
-- Use tags for better organization
-
-#### Setting Budgets
-- Navigate to "Set Budget" from the sidebar
-- Choose a category and set your monthly budget amount
-- Set alert thresholds to get notified when approaching limits
-- Review budget performance on the budgets page
-
-#### Creating Goals
-- Go to "Add Goal" to create new financial goals
-- Use quick templates for common goals like emergency funds
-- Track progress with visual indicators
-- Get recommendations for monthly savings amounts
-
-#### Viewing Analytics
+```
+moneymanagementapp/
+├── app/
+│   ├── __init__.py          # Application factory
+│   ├── models.py            # Database models
+│   ├── auth/                # Authentication blueprint
+│   │   ├── __init__.py
+│   │   ├── routes.py        # Auth routes
+│   │   └── forms.py         # Auth forms
+│   ├── main/                # Main application routes
+│   │   ├── __init__.py
+│   │   ├── routes.py        # Main routes
+│   │   └── forms.py         # Main forms
+│   ├── static/              # CSS, JS, images
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── img/
+│   └── templates/           # HTML templates
+│       ├── base.html
+│       ├── auth/
+│       └── main/
+├── tests/                   # Test suite
+│   ├── __init__.py
+│   ├── test_auth.py
+│   ├── test_expenses.py
+│   └── test_models.py
+├── config.py               # Configuration settings
+├── run.py                  # Application entry point
+├── wsgi.py                 # WSGI entry point for production
+├── requirements.txt        # Python dependencies
+├── requirements_pythonanywhere.txt  # PythonAnywhere specific
+├── DEPLOYMENT.md          # Deployment guide
+└── README.md              # This file
+```
 - Visit the analytics page for detailed insights
 - View spending trends, category breakdowns, and comparisons
 - Export data for external analysis
@@ -171,30 +147,128 @@ moneymanagementapp/
 ### Expenses
 - Detailed expense tracking with categories, amounts, dates
 - Recurring expense support
-- Priority levels and custom tags
+## Usage
 
-### Budgets
-- Monthly budget limits by category
-- Alert thresholds and performance tracking
+### Creating Your First Account
 
-### Goals
-- Financial goal tracking with target amounts and dates
-- Progress monitoring and completion status
+1. Visit the application homepage
+2. Click "Register" to create a new account
+3. Fill in your details and submit the form
+4. Log in with your new credentials
 
-### Investments (Future)
-- Investment portfolio tracking
-- Performance monitoring and recommendations
+### Adding Expenses
 
-## Features in Development
+1. Navigate to "Add Expense" from the main menu
+2. Fill in the expense details:
+   - Amount
+   - Category
+   - Description
+   - Date
+3. Submit the form to save your expense
 
-- [ ] Partner account linking and shared access
-- [ ] Mobile app with offline support
-- [ ] Bank account integration for automatic expense import
-- [ ] Advanced investment tracking and recommendations
-- [ ] Email notifications and alerts
-- [ ] Multi-currency support
-- [ ] Data export to popular formats (PDF, Excel)
-- [ ] Receipt photo upload and OCR processing
+### Managing Categories
+
+1. Go to "Categories" in the main menu
+2. Add new categories or edit existing ones
+3. Categories help organize and analyze your spending
+
+### Viewing Analytics
+
+1. Visit the Dashboard to see:
+   - Total expenses by category
+   - Monthly spending trends
+   - Recent transactions
+   - Budget insights
+
+## API Endpoints
+
+The application provides a RESTful interface:
+
+- `GET /` - Homepage and dashboard
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User authentication
+- `GET /expenses` - View all expenses
+- `POST /expenses/add` - Add new expense
+- `PUT /expenses/<id>` - Update expense
+- `DELETE /expenses/<id>` - Delete expense
+- `GET /categories` - View categories
+- `POST /categories/add` - Add new category
+
+## Testing
+
+Run the test suite:
+
+```bash
+python -m unittest discover tests
+```
+
+Test coverage includes:
+- User authentication flows
+- Expense CRUD operations
+- Category management
+- Database models
+- Form validation
+- Security features
+
+## Database Schema
+
+### Users Table
+- id (Primary Key)
+- username (Unique)
+- email (Unique)
+- password_hash
+- is_admin (Boolean)
+- created_at
+
+### Expenses Table
+- id (Primary Key)
+- user_id (Foreign Key)
+- amount (Decimal)
+- category
+- description
+- date
+- created_at
+
+## Security Features
+
+- Password hashing using Werkzeug
+- CSRF protection on all forms
+- Secure session management
+- SQL injection prevention through SQLAlchemy ORM
+- Input validation and sanitization
+- Admin role-based access control
+
+## Configuration
+
+The application supports multiple environments:
+
+- **Development**: SQLite database, debug mode enabled
+- **Testing**: In-memory database, testing configurations
+- **Production**: MySQL database, optimized for PythonAnywhere
+
+Environment-specific settings are managed in `config.py`.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Errors**
+   - Ensure DATABASE_URL is correctly set
+   - Check database credentials and connectivity
+
+2. **Import Errors**
+   - Verify virtual environment is activated
+   - Ensure all dependencies are installed
+
+3. **Static Files Not Loading**
+   - Check Flask configuration for static files
+   - Verify file paths in templates
+
+### Getting Help
+
+- Check the [Issues](https://github.com/yourusername/moneymanagementapp/issues) page
+- Review the deployment guide in `DEPLOYMENT.md`
+- Ensure all environment variables are properly set
 
 ## Contributing
 
@@ -208,18 +282,24 @@ moneymanagementapp/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
-
-For support, please create an issue on the GitHub repository or contact the development team.
-
 ## Acknowledgments
 
-- Bootstrap for the responsive UI framework
-- Plotly.js for interactive charts and graphs
-- Font Awesome for icons
 - Flask community for the excellent web framework
-- scikit-learn for machine learning capabilities
+- Bootstrap team for the responsive CSS framework
+- Chart.js for beautiful data visualizations
+- PythonAnywhere for reliable hosting platform
+
+## Version History
+
+- **v1.0.0** - Initial release with core expense tracking features
+- **v1.1.0** - Added category management and basic analytics
+- **v1.2.0** - Enhanced security features and admin panel
+- **v2.0.0** - Production-ready with comprehensive testing and deployment guides
+
+## Contact
+
+For questions or support, please open an issue on GitHub or contact the maintainer.
 
 ---
 
-**CouplesBudget Pro** - Empowering couples to achieve their financial dreams together! 💑💰
+**Happy Budget Tracking!** 💰📊

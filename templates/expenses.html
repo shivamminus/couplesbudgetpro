@@ -14,7 +14,7 @@
         {% endif %}
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+        <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add New Expense
         </a>
     </div>
@@ -151,12 +151,12 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" 
+                                <a href="{{ url_for('expenses.edit_expense', expense_id=expense.id) }}" 
                                    class="btn btn-outline-primary btn-sm" 
                                    title="Edit expense">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{{ url_for('delete_expense', expense_id=expense.id) }}" 
+                                <a href="{{ url_for('expenses.delete_expense', expense_id=expense.id) }}" 
                                    class="btn btn-outline-danger btn-sm" 
                                    title="Delete expense"
                                    onclick="return confirm('Are you sure you want to delete this expense?')">
@@ -176,7 +176,7 @@
             <ul class="pagination justify-content-center">
                 {% if expenses.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('expenses', page=expenses.prev_num) }}">Previous</a>
+                    <a class="page-link" href="{{ url_for('expenses.list_expenses', page=expenses.prev_num) }}">Previous</a>
                 </li>
                 {% endif %}
                 
@@ -184,7 +184,7 @@
                     {% if page_num %}
                         {% if page_num != expenses.page %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('expenses', page=page_num) }}">{{ page_num }}</a>
+                            <a class="page-link" href="{{ url_for('expenses.list_expenses', page=page_num) }}">{{ page_num }}</a>
                         </li>
                         {% else %}
                         <li class="page-item active">
@@ -200,7 +200,7 @@
                 
                 {% if expenses.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('expenses', page=expenses.next_num) }}">Next</a>
+                    <a class="page-link" href="{{ url_for('expenses.list_expenses', page=expenses.next_num) }}">Next</a>
                 </li>
                 {% endif %}
             </ul>
@@ -211,7 +211,7 @@
             <i class="fas fa-receipt fa-5x text-muted mb-4"></i>
             <h4 class="text-muted">No expenses found</h4>
             <p class="text-muted mb-4">Start tracking your expenses to better manage your finances.</p>
-            <a href="{{ url_for('add_expense') }}" class="btn btn-primary btn-lg">
+            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-primary btn-lg">
                 <i class="fas fa-plus"></i> Add Your First Expense
             </a>
         </div>

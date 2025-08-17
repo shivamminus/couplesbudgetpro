@@ -15,10 +15,10 @@
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <a href="{{ url_for('add_expense') }}" class="btn btn-sm btn-primary">
+            <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Add Expense
             </a>
-            <a href="{{ url_for('set_budget') }}" class="btn btn-sm btn-success">
+            <a href="{{ url_for('budgets.set_budget') }}" class="btn btn-sm btn-success">
                 <i class="fas fa-bullseye"></i> Set Budget
             </a>
         </div>
@@ -128,7 +128,7 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" 
+                                        <a href="{{ url_for('expenses.edit_expense', expense_id=expense.id) }}" 
                                            class="btn btn-outline-primary btn-sm" 
                                            title="Edit expense">
                                             <i class="fas fa-edit"></i>
@@ -141,14 +141,14 @@
                     </table>
                 </div>
                 <div class="text-center">
-                    <a href="{{ url_for('expenses') }}" class="btn btn-outline-primary">View All Expenses</a>
+                    <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-outline-primary">View All Expenses</a>
                 </div>
                 {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No expenses yet</h5>
                     <p class="text-muted">Start by adding your first expense</p>
-                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">Add Expense</a>
+                    <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-primary">Add Expense</a>
                 </div>
                 {% endif %}
             </div>
@@ -182,13 +182,13 @@
                 </div>
                 {% endfor %}
                 <div class="text-center">
-                    <a href="{{ url_for('budgets') }}" class="btn btn-outline-primary">Manage Budgets</a>
+                    <a href="{{ url_for('budgets.list_budgets') }}" class="btn btn-outline-primary">Manage Budgets</a>
                 </div>
                 {% else %}
                 <div class="text-center py-3">
                     <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">No budgets set</h6>
-                    <a href="{{ url_for('set_budget') }}" class="btn btn-primary">Set Budget</a>
+                    <a href="{{ url_for('budgets.set_budget') }}" class="btn btn-primary">Set Budget</a>
                 </div>
                 {% endif %}
             </div>
@@ -225,13 +225,13 @@
                 </div>
                 {% endfor %}
                 <div class="text-center">
-                    <a href="{{ url_for('goals') }}" class="btn btn-outline-primary">View All Goals</a>
+                    <a href="{{ url_for('goals.list_goals') }}" class="btn btn-outline-primary">View All Goals</a>
                 </div>
                 {% else %}
                 <div class="text-center py-3">
                     <i class="fas fa-flag fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">No goals set</h6>
-                    <a href="{{ url_for('add_goal') }}" class="btn btn-primary">Add Goal</a>
+                    <a href="{{ url_for('goals.add_goal') }}" class="btn btn-primary">Add Goal</a>
                 </div>
                 {% endif %}
             </div>
@@ -264,7 +264,7 @@
                 {% endfor %}
                 
                 <div class="text-center">
-                    <a href="{{ url_for('suggestions') }}" class="btn btn-outline-primary">View All Suggestions</a>
+                    <a href="{{ url_for('analytics.suggestions') }}" class="btn btn-outline-primary">View All Suggestions</a>
                 </div>
                 {% else %}
                 <div class="text-center py-3">
