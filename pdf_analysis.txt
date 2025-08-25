@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "f:\development\moneymanagementapp\analyze_pdf.py", line 2, in <module>
+    import pdfplumber
+ModuleNotFoundError: No module named 'pdfplumber'

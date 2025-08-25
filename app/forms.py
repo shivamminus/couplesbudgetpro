@@ -2,8 +2,8 @@
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import StringField, FloatField, SelectField, TextAreaField, DateField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, NumberRange
+from wtforms import StringField, FloatField, SelectField, TextAreaField, DateField, PasswordField, SubmitField, BooleanField, HiddenField
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 from datetime import datetime
 
 class LoginForm(FlaskForm):
@@ -154,3 +154,83 @@ class InvestmentForm(FlaskForm):
         ('high', 'High Risk')
     ], default='medium')
     submit = SubmitField('Add Investment')
+
+class PDFImportForm(FlaskForm):
+    """Form for importing bank statement PDFs"""
+    pdf_file = FileField('Bank Statement PDF', validators=[
+        FileRequired(), 
+        FileAllowed(['pdf'], 'PDF files only!')
+    ])
+    bank_name = SelectField('Bank', choices=[
+        ('', 'Select Bank'),
+        ('hsbc', 'HSBC'),
+        ('barclays', 'Barclays'),
+        ('lloyds', 'Lloyds'),
+        ('natwest', 'NatWest'),
+        ('santander', 'Santander'),
+        ('halifax', 'Halifax'),
+        ('nationwide', 'Nationwide'),
+        ('tesco', 'Tesco Bank'),
+        ('metro', 'Metro Bank'),
+        ('monzo', 'Monzo'),
+        ('starling', 'Starling Bank'),
+        ('revolut', 'Revolut'),
+        ('other', 'Other')
+    ], validators=[DataRequired()])
+    statement_month = SelectField('Statement Month', choices=[
+        ('', 'Select Month'),
+        ('1', 'January'), ('2', 'February'), ('3', 'March'),
+        ('4', 'April'), ('5', 'May'), ('6', 'June'),
+        ('7', 'July'), ('8', 'August'), ('9', 'September'),
+        ('10', 'October'), ('11', 'November'), ('12', 'December')
+    ], validators=[DataRequired()])
+    statement_year = SelectField('Statement Year', choices=[
+        (str(year), str(year)) for year in range(2020, 2030)
+    ], validators=[DataRequired()])
+    submit = SubmitField('Import PDF')
+
+class CSVImportForm(FlaskForm):
+    """Form for importing CSV bank statements"""
+    csv_file = FileField('Bank Statement CSV', validators=[
+        FileRequired(), 
+        FileAllowed(['csv'], 'CSV files only!')
+    ])
+    date_column = StringField('Date Column Name', validators=[DataRequired()], default='Date')
+    description_column = StringField('Description Column Name', validators=[DataRequired()], default='Description')
+    amount_column = StringField('Amount Column Name', validators=[DataRequired()], default='Amount')
+    has_header = BooleanField('File has header row', default=True)
+    submit = SubmitField('Import CSV')
+
+class TransactionReviewForm(FlaskForm):
+    """Form for reviewing and categorizing imported transactions"""
+    transaction_id = HiddenField('Transaction ID')
+    is_expense = BooleanField('Is this an expense?', default=True)
+    category = SelectField('Category', choices=[
+        ('housing', 'Housing'),
+        ('transportation', 'Transportation'),
+        ('food', 'Food & Dining'),
+        ('utilities', 'Utilities'),
+        ('healthcare', 'Healthcare'),
+        ('entertainment', 'Entertainment'),
+        ('shopping', 'Shopping'),
+        ('education', 'Education'),
+        ('insurance', 'Insurance'),
+        ('debt', 'Debt Payments'),
+        ('savings', 'Savings'),
+        ('investment', 'Investment'),
+        ('income', 'Income'),
+        ('transfer', 'Transfer'),
+        ('ignore', 'Ignore (Don\'t import)'),
+        ('other', 'Other')
+    ], validators=[Optional()])
+    description = StringField('Description', validators=[Optional()])
+    subcategory = StringField('Subcategory', validators=[Optional()])
+    tags = StringField('Tags (comma separated)', validators=[Optional()])
+    user_notes = TextAreaField('Notes', validators=[Optional()])
+    
+class BulkTransactionReviewForm(FlaskForm):
+    """Form for bulk processing of imported transactions"""
+    approve_all = SubmitField('Approve All Suggestions')
+    review_individually = SubmitField('Review Each Transaction')
+    delete_batch = SubmitField('Delete This Import Batch')
+    export_csv = SubmitField('Export to CSV')

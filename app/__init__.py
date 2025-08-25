@@ -45,7 +45,7 @@ def create_app(config_name=None):
     login_manager.login_view = 'auth.login'
     
     # Import models to register them with SQLAlchemy
-    from app.models import User, Expense, Budget, Goal, Investment, PartnerRequest
+    from app.models import User, Expense, Budget, Goal, Investment, PartnerRequest, ImportedTransaction
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -59,6 +59,7 @@ def create_app(config_name=None):
     from app.routes.goals import goals_bp
     from app.routes.analytics import analytics_bp
     from app.routes.profile import profile_bp
+    from app.routes.imports import imports
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(main_bp)
@@ -67,6 +68,7 @@ def create_app(config_name=None):
     app.register_blueprint(goals_bp, url_prefix='/goals')
     app.register_blueprint(analytics_bp, url_prefix='/analytics')
     app.register_blueprint(profile_bp, url_prefix='/profile')
+    app.register_blueprint(imports, url_prefix='/imports')
     
     # Error handlers
     from app.errors import bp as errors_bp

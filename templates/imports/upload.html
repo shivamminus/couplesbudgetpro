@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Import Bank Statement - Money Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1><i class="fas fa-file-upload"></i> Import Bank Statement</h1>
+                <p class="text-muted">Upload your bank statement PDF to automatically import transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Upload PDF Statement
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.pdf_file.label(class="form-label") }}
+                                    {{ form.pdf_file(class="form-control") }}
+                                    {% if form.pdf_file.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.pdf_file.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Maximum file size: 16MB. Supported format: PDF only.
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.bank_name.label(class="form-label") }}
+                                    {{ form.bank_name(class="form-select") }}
+                                    {% if form.bank_name.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.bank_name.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.statement_month.label(class="form-label") }}
+                                    {{ form.statement_month(class="form-select") }}
+                                    {% if form.statement_month.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.statement_month.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.statement_year.label(class="form-label") }}
+                                    {{ form.statement_year(class="form-select") }}
+                                    {% if form.statement_year.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.statement_year.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        How it Works
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="step mb-3">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">1</span>
+                            <strong>Upload PDF</strong>
+                        </div>
+                        <p class="text-muted mb-0 ms-4">
+                            Select your bank statement PDF file
+                        </p>
+                    </div>
+                    
+                    <div class="step mb-3">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">2</span>
+                            <strong>Auto-Processing</strong>
+                        </div>
+                        <p class="text-muted mb-0 ms-4">
+                            We'll extract and categorize transactions
+                        </p>
+                    </div>
+                    
+                    <div class="step mb-3">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">3</span>
+                            <strong>Review & Approve</strong>
+                        </div>
+                        <p class="text-muted mb-0 ms-4">
+                            Review categories and approve imports
+                        </p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success rounded-pill me-2">4</span>
+                            <strong>Import Complete</strong>
+                        </div>
+                        <p class="text-muted mb-0 ms-4">
+                            Transactions added to your expenses
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-university"></i>
+                        Supported Banks
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            HSBC, Barclays, Lloyds
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            NatWest, Santander
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Halifax, Nationwide
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Monzo, Starling, Revolut
+                        </li>
+                        <li>
+                            <i class="fas fa-plus text-primary me-2"></i>
+                            More banks supported
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-file-alt"></i>
+                        Other Import Options
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('imports.upload_csv') }}" class="btn btn-outline-success w-100 mb-2">
+                        <i class="fas fa-file-csv"></i> Import CSV File
+                    </a>
+                    <a href="{{ url_for('imports.test_processing') }}" class="btn btn-outline-info w-100 mb-2">
+                        <i class="fas fa-vial"></i> Test Processing
+                    </a>
+                    <small class="text-muted">
+                        CSV import is often more reliable than PDF processing
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history"></i>
+                        Recent Imports
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-file-import fa-3x mb-3 opacity-50"></i>
+                        <p>No recent imports. Upload your first bank statement to get started!</p>
+                        <a href="{{ url_for('imports.import_history') }}" class="btn btn-outline-primary">
+                            View Import History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.step {
+    position: relative;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 30px;
+    height: 20px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.card-header h5, .card-header h6 {
+    color: #495057;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+</style>
+{% endblock %}

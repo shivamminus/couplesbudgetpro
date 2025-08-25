@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Import History - Money Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-history"></i> Import History</h1>
+                    <p class="text-muted">View all your PDF import batches and their status</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('imports.upload_statement') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Import
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Import Batches</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if batches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Import Date</th>
+                                        <th>Source File</th>
+                                        <th>Transactions</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in batches %}
+                                    <tr>
+                                        <td>{{ batch.import_date.strftime('%d %B %Y') }}</td>
+                                        <td>
+                                            <i class="fas fa-file-pdf text-danger me-2"></i>
+                                            {{ batch.source_file }}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ batch.total_count }}</span>
+                                            transactions
+                                        </td>
+                                        <td class="text-success">£{{ "%.2f"|format(batch.total_amount) }}</td>
+                                        <td>
+                                            {% if batch.status == 'Completed' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Completed
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock"></i> Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set progress = (batch.processed_count / batch.total_count * 100) if batch.total_count > 0 else 0 %}
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if progress == 100 %}bg-success{% else %}bg-warning{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ progress }}%"
+                                                     aria-valuenow="{{ progress }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ progress|round }}%
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ batch.processed_count }}/{{ batch.total_count }} processed
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                {% if batch.pending_count > 0 %}
+                                                    <a href="{{ url_for('imports.review_batch', batch_id=batch.batch_id) }}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i class="fas fa-edit"></i> Review
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-secondary dropdown-toggle" 
+                                                            type="button" 
+                                                            data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        {% if batch.pending_count > 0 %}
+                                                            <li>
+                                                                <a class="dropdown-item" 
+                                                                   href="{{ url_for('imports.review_batch', batch_id=batch.batch_id) }}">
+                                                                    <i class="fas fa-edit me-2"></i>Review Batch
+                                                                </a>
+                                                            </li>
+                                                        {% endif %}
+                                                        
+                                                        {% if batch.processed_count > 0 %}
+                                                            <li>
+                                                                <a class="dropdown-item" href="#">
+                                                                    <i class="fas fa-download me-2"></i>Export CSV
+                                                                </a>
+                                                            </li>
+                                                        {% endif %}
+                                                        
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form method="POST" 
+                                                                  action="{{ url_for('imports.delete_batch', batch_id=batch.batch_id) }}" 
+                                                                  class="d-inline">
+                                                                <button type="submit" 
+                                                                        class="dropdown-item text-danger"
+                                                                        onclick="return confirm('Are you sure you want to delete this import batch? This cannot be undone.')">
+                                                                    <i class="fas fa-trash me-2"></i>Delete Batch
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-import fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Import History</h4>
+                            <p class="text-muted mb-4">
+                                You haven't imported any bank statements yet.
+                            </p>
+                            <a href="{{ url_for('imports.upload_statement') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Import Your First Statement
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if batches %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Import Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 class="text-primary">{{ batches|length }}</h3>
+                            <p class="text-muted mb-0">Total Imports</p>
+                        </div>
+                        <div class="col-md-3">
+                            {% set total_transactions = batches|sum(attribute='total_count') %}
+                            <h3 class="text-info">{{ total_transactions }}</h3>
+                            <p class="text-muted mb-0">Total Transactions</p>
+                        </div>
+                        <div class="col-md-3">
+                            {% set processed_transactions = batches|sum(attribute='processed_count') %}
+                            <h3 class="text-success">{{ processed_transactions }}</h3>
+                            <p class="text-muted mb-0">Processed</p>
+                        </div>
+                        <div class="col-md-3">
+                            {% set pending_transactions = total_transactions - processed_transactions %}
+                            <h3 class="text-warning">{{ pending_transactions }}</h3>
+                            <p class="text-muted mb-0">Pending Review</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.dropdown-menu {
+    min-width: 150px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,.05);
+}
+</style>
+{% endblock %}

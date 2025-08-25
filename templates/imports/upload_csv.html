@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Import CSV Statement - Money Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1><i class="fas fa-file-csv"></i> Import CSV Statement</h1>
+                <p class="text-muted">Upload your bank statement CSV file to automatically import transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Upload CSV Statement
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    {{ form.csv_file.label(class="form-label") }}
+                                    {{ form.csv_file(class="form-control") }}
+                                    {% if form.csv_file.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.csv_file.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Maximum file size: 16MB. Supported format: CSV only.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    {{ form.date_column.label(class="form-label") }}
+                                    {{ form.date_column(class="form-control") }}
+                                    {% if form.date_column.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.date_column.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    {{ form.description_column.label(class="form-label") }}
+                                    {{ form.description_column(class="form-control") }}
+                                    {% if form.description_column.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.description_column.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    {{ form.amount_column.label(class="form-label") }}
+                                    {{ form.amount_column(class="form-control") }}
+                                    {% if form.amount_column.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.amount_column.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.has_header(class="form-check-input") }}
+                                    {{ form.has_header.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        CSV Format Requirements
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="requirement mb-3">
+                        <h6><i class="fas fa-check text-success"></i> Required Columns</h6>
+                        <ul class="list-unstyled ms-3">
+                            <li>• Date (DD/MM/YYYY or similar)</li>
+                            <li>• Description (transaction details)</li>
+                            <li>• Amount (positive numbers)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirement mb-3">
+                        <h6><i class="fas fa-lightbulb text-warning"></i> Sample Format</h6>
+                        <pre class="bg-light p-2 rounded small">
+Date,Description,Amount
+01/01/2024,Tesco Store,25.50
+02/01/2024,Salary,2500.00
+03/01/2024,Netflix,12.99</pre>
+                    </div>
+                    
+                    <div class="requirement">
+                        <h6><i class="fas fa-cog text-info"></i> Configuration</h6>
+                        <p class="text-muted small">
+                            Specify the exact column names in your CSV file. 
+                            If your file doesn't have headers, uncheck the header option.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-file-pdf"></i>
+                        Other Import Options
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('imports.upload_statement') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-file-pdf"></i> Import PDF Statement
+                    </a>
+                    <a href="{{ url_for('imports.test_processing') }}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-vial"></i> Test Processing
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.requirement h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+pre {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}

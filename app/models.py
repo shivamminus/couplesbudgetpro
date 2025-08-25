@@ -24,6 +24,7 @@ class User(UserMixin, db.Model):
     budgets = db.relationship('Budget', backref='user', lazy=True, cascade='all, delete-orphan')
     goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan')
     investments = db.relationship('Investment', backref='user', lazy=True, cascade='all, delete-orphan')
+    imported_transactions = db.relationship('ImportedTransaction', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def set_password(self, password):
         """Hash and set password"""
@@ -119,6 +120,40 @@ class Investment(db.Model):
     
     def __repr__(self):
         return f'<Investment {self.name}: £{self.amount}>'
+
+class ImportedTransaction(db.Model):
+    """Model for storing imported transactions from PDF statements before categorization"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    raw_description = db.Column(db.String(500), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    transaction_date = db.Column(db.Date, nullable=False)
+    balance = db.Column(db.Float, nullable=True)
+    transaction_type = db.Column(db.String(20), nullable=True)  # debit, credit
+    
+    # Import metadata
+    import_batch_id = db.Column(db.String(36), nullable=False)  # UUID for grouping imports
+    source_file = db.Column(db.String(200), nullable=False)
+    import_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Processing status
+    is_processed = db.Column(db.Boolean, default=False)
+    is_expense = db.Column(db.Boolean, default=True)  # True for expenses, False for income
+    suggested_category = db.Column(db.String(50), nullable=True)
+    suggested_description = db.Column(db.String(200), nullable=True)
+    confidence_score = db.Column(db.Float, nullable=True)  # AI confidence in categorization
+    
+    # User review
+    is_reviewed = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    user_notes = db.Column(db.Text, nullable=True)
+    
+    # Link to created expense (after processing)
+    expense_id = db.Column(db.Integer, db.ForeignKey('expense.id'), nullable=True)
+    created_expense = db.relationship('Expense', backref='source_transaction')
+    
+    def __repr__(self):
+        return f'<ImportedTransaction {self.raw_description}: £{self.amount}>'
 
 class PartnerRequest(db.Model):
     """Partner request model for linking couples"""
