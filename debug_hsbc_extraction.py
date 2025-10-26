@@ -16,7 +16,8 @@ def debug_hsbc_extraction():
     
     try:
         # Read the HSBC PDF file with PyPDF2 directly
-        with open('2025-08-29_Statement.pdf', 'rb') as f:
+        pdf_path = os.path.join(os.path.dirname(__file__), '2025-08-29_Statement.pdf')
+        with open(pdf_path, 'rb') as f:
             reader = PyPDF2.PdfReader(f)
             
             for page_num in range(len(reader.pages)):

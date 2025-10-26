@@ -241,170 +241,234 @@ class BankStatementProcessor:
         return transactions
     
     def _parse_hsbc_pdf(self, text: str) -> List[Dict]:
-        """Parse HSBC Bank PDF statements with specialized logic"""
+        """Parse HSBC Bank PDF statements with comprehensive logic to capture ALL transactions"""
         transactions = []
         lines = text.split('\n')
         
         print(f"DEBUG: Parsing HSBC PDF with {len(lines)} lines")
         
-        current_transaction = None
-        current_date = None
-        
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if not line or line in ['A', 'see reverse for call times', 'used by deaf or speech impaired customers']:
+        # Build a comprehensive transaction list
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1
                 continue
                 
-            # Skip header lines
+            # Skip header/footer lines
             if any(skip in line for skip in ['Contact tel', 'Text phone', 'www.hsbc.co.uk', 'Your Statement', 
                                             'Account Name', 'Sortcode', 'Account Number', 'Sheet Number',
                                             'Opening Balance', 'Payments In', 'Payments Out', 'Closing Balance',
-                                            'International Bank Account Number', 'Bank Identifier Code']):
+                                            'International Bank Account Number', 'Bank Identifier Code',
+                                            'see reverse for call times', 'used by deaf or speech impaired',
+                                            'BALANCEBROUGHTFORWARD', 'BALANCECARRIEDFORWARD']):
+                i += 1
                 continue
                 
-            # Look for date pattern at start of line (DD MMM YY format)
+            # Look for date pattern at start of line
             date_match = re.match(r'^(\d{2}\s+\w{3}\s+\d{2})', line)
             if date_match:
-                # Process previous transaction if exists
-                if current_transaction:
-                    transactions.append(current_transaction)
-                    
-                # Start new transaction
                 date_str = date_match.group(1)
-                current_date = date_str
                 remaining = line[date_match.end():].strip()
                 
-                # Try to parse the transaction line
-                # Format examples from HSBC PDF:
-                # "30 Jul 25 TFR401265 35769132  INTERNET TRANSFER 2,000.00"
-                # "31 Jul 25 CRCOGNIZANT 2,853.99"
-                # "02 Aug 25 BPShivam Dubey HSBC Expense 200.00"
+                print(f"DEBUG: Found date line: {date_str} | {remaining}")
                 
-                print(f"DEBUG: Parsing HSBC line: {line}")
-                
-                # Look for transaction type code - HSBC codes are specific
-                # Known HSBC codes: CR, TFR, ATM, VIS, BP, DD, OBP
-                hsbc_codes = ['CR', 'TFR', 'ATM', 'VIS', 'BP', 'DD', 'OBP']
-                
-                trans_type = None
-                details = remaining
-                
-                # Try to match known HSBC transaction codes at the start
-                for code in hsbc_codes:
-                    if remaining.startswith(code):
-                        trans_type = code
-                        details = remaining[len(code):].strip()
-                        break
-                
-                if trans_type:
-                    # For HSBC, the transaction type is often stuck to the merchant name
-                    # So we need to be more careful about what we consider the "details"
-                    
-                    # Don't remove digits from merchant names, only remove reference numbers at start
-                    # if they look like "401265 35769132" (multiple groups of digits)
-                    if re.match(r'^[\d\s]{6,}', details):
-                        details = re.sub(r'^[\d\s]{6,}', '', details).strip()
-                    
-                    # Extract amount and balance from the end of the line
-                    amount_match = re.search(r'([\d,]+\.\d{2})(?:\s+([\d,]+\.\d{2}))?$', details)
-                    
-                    if amount_match:
-                        amount_str = amount_match.group(1)
-                        balance_str = amount_match.group(2) if amount_match.group(2) else None
-                        description = details[:amount_match.start()].strip()
-                        
-                        # Skip if description is too short after cleaning
-                        if len(description) < 2:
-                            print(f"DEBUG: Skipping transaction with short description: '{description}'")
-                            continue
-                        
-                        try:
-                            transaction_date = datetime.strptime(date_str, '%d %b %y').date()
-                            amount = self._parse_amount(amount_str)
-                            balance = self._parse_amount(balance_str) if balance_str else None
-                            
-                            # Determine transaction direction
-                            transaction_direction = self._hsbc_transaction_type(trans_type, description)
-                            
-                            current_transaction = {
-                                'date': transaction_date,
-                                'description': description,
-                                'amount': amount,
-                                'balance': balance,
-                                'type': transaction_direction,
-                                'hsbc_type': trans_type,
-                                'raw_text': line
-                            }
-                            
-                            print(f"DEBUG: Parsed HSBC transaction: {date_str} - {trans_type} - {description} - £{amount}")
-                            
-                        except Exception as e:
-                            print(f"DEBUG: Error parsing HSBC transaction: {str(e)}")
-                            current_transaction = None
-                    else:
-                        # Multi-line transaction - collect description
-                        current_transaction = {
-                            'date_str': date_str,
-                            'trans_type': trans_type,
-                            'description_parts': [details],
-                            'raw_lines': [line]
-                        }
-                        
-            elif current_transaction and isinstance(current_transaction.get('description_parts'), list):
-                # Continuation of multi-line transaction
-                current_transaction['description_parts'].append(line)
-                current_transaction['raw_lines'].append(line)
-                
-                # Check if this line has the amount/balance
-                amount_match = re.search(r'([\d,]+\.\d{2})(?:\s+([\d,]+\.\d{2}))?$', line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    balance_str = amount_match.group(2) if amount_match.group(2) else None
-                    
-                    # Complete the transaction
-                    full_description = ' '.join(current_transaction['description_parts'])
-                    # Remove the amount part from description
-                    description = full_description[:full_description.rfind(amount_str)].strip()
-                    
-                    # Skip if description is too short
-                    if len(description) < 3:
-                        print(f"DEBUG: Skipping multi-line transaction with short description: '{description}'")
-                        current_transaction = None
-                        continue
-                    
-                    try:
-                        transaction_date = datetime.strptime(current_transaction['date_str'], '%d %b %y').date()
-                        amount = self._parse_amount(amount_str)
-                        balance = self._parse_amount(balance_str) if balance_str else None
-                        
-                        transaction_direction = self._hsbc_transaction_type(current_transaction['trans_type'], description)
-                        
-                        # Create the final transaction - don't set current_transaction to avoid duplicates
-                        final_transaction = {
-                            'date': transaction_date,
-                            'description': description,
-                            'amount': amount,
-                            'balance': balance,
-                            'type': transaction_direction,
-                            'hsbc_type': current_transaction['trans_type'],
-                            'raw_text': ' '.join(current_transaction['raw_lines'])
-                        }
-                        
-                        transactions.append(final_transaction)
-                        current_transaction = None  # Clear to avoid duplicate addition
-                        
-                        print(f"DEBUG: Completed multi-line HSBC transaction: {description} - £{amount}")
-                        
-                    except Exception as e:
-                        print(f"DEBUG: Error completing HSBC transaction: {str(e)}")
-                        current_transaction = None
-        
-        # Don't forget the last transaction (only if it's a complete transaction)
-        if current_transaction and 'date' in current_transaction:
-            transactions.append(current_transaction)
+                # Parse transactions starting with this date
+                transactions_found = self._parse_hsbc_transaction_group(date_str, remaining, lines, i)
+                transactions.extend(transactions_found)
+            
+            i += 1
         
         print(f"DEBUG: Successfully parsed {len(transactions)} HSBC transactions")
         return transactions
+    
+    def _parse_hsbc_transaction_group(self, date_str: str, first_line_content: str, all_lines: List[str], start_idx: int) -> List[Dict]:
+        """Parse a group of transactions starting from a date line"""
+        transactions = []
+        
+        try:
+            transaction_date = datetime.strptime(date_str, '%d %b %y').date()
+        except ValueError:
+            print(f"DEBUG: Could not parse date: {date_str}")
+            return transactions
+        
+        # Look ahead for related transaction lines
+        current_line_content = first_line_content
+        
+        # Parse the first transaction on the date line itself
+        first_transaction = self._parse_single_hsbc_transaction(date_str, current_line_content, all_lines, start_idx)
+        if first_transaction:
+            transactions.append(first_transaction)
+        
+        # Look for additional transactions in the following lines (without dates)
+        i = start_idx + 1
+        while i < len(all_lines) and i < start_idx + 10:  # Look ahead up to 10 lines
+            line = all_lines[i].strip()
+            if not line:
+                i += 1
+                continue
+                
+            # Stop if we hit another date line
+            if re.match(r'^(\d{2}\s+\w{3}\s+\d{2})', line):
+                break
+                
+            # Skip balance/header lines
+            if any(skip in line for skip in ['BALANCE', 'Contact tel', 'Text phone', 'Account Name']):
+                i += 1
+                continue
+            
+            # Look for transaction patterns without dates
+            additional_transaction = self._parse_undated_hsbc_transaction(date_str, line, all_lines, i)
+            if additional_transaction:
+                transactions.append(additional_transaction)
+                print(f"DEBUG: Found additional transaction on {date_str}: {additional_transaction['description']} - £{additional_transaction['amount']}")
+            
+            i += 1
+        
+        return transactions
+    
+    def _parse_single_hsbc_transaction(self, date_str: str, line_content: str, all_lines: List[str], line_idx: int) -> Optional[Dict]:
+        """Parse a single HSBC transaction from the main date line"""
+        
+        # Known HSBC codes: CR, TFR, ATM, VIS, BP, DD, OBP
+        hsbc_codes = ['CR', 'TFR', 'ATM', 'VIS', 'BP', 'DD', 'OBP']
+        
+        trans_type = None
+        details = line_content
+        
+        # Try to match known HSBC transaction codes at the start
+        for code in hsbc_codes:
+            if line_content.startswith(code):
+                trans_type = code
+                details = line_content[len(code):].strip()
+                break
+        
+        # Check for card transactions that start with )))
+        if not trans_type and line_content.startswith(')))'):
+            trans_type = 'CARD'
+            details = line_content[3:].strip()
+        
+        if trans_type:
+            # Try to find amount on this line or next few lines
+            amount = None
+            description = details
+            
+            # First try to extract amount from current line
+            amount_match = re.search(r'([\d,]+\.\d{2})', line_content)
+            if amount_match:
+                amount = self._parse_amount(amount_match.group(1))
+                # Remove amount from description
+                description = re.sub(r'\s*[\d,]+\.\d{2}.*$', '', details).strip()
+            else:
+                # Look for amount in next few lines
+                for j in range(1, 4):
+                    if line_idx + j < len(all_lines):
+                        next_line = all_lines[line_idx + j].strip()
+                        amount_match = re.search(r'([\d,]+\.\d{2})', next_line)
+                        if amount_match:
+                            amount = self._parse_amount(amount_match.group(1))
+                            # For multi-line, include the description from next line too
+                            description_part = re.sub(r'\s*[\d,]+\.\d{2}.*$', '', next_line).strip()
+                            if description_part and len(description_part) > 2:
+                                description = f"{details} {description_part}".strip()
+                            break
+            
+            if amount and amount > 0:
+                try:
+                    transaction_date = datetime.strptime(date_str, '%d %b %y').date()
+                    transaction_direction = self._hsbc_transaction_type(trans_type, description)
+                    
+                    return {
+                        'date': transaction_date,
+                        'description': description,
+                        'amount': amount,
+                        'type': transaction_direction,
+                        'hsbc_type': trans_type,
+                        'raw_text': f"{date_str} {line_content}"
+                    }
+                except Exception as e:
+                    print(f"DEBUG: Error creating transaction: {str(e)}")
+        
+        return None
+    
+    def _parse_undated_hsbc_transaction(self, date_str: str, line: str, all_lines: List[str], line_idx: int) -> Optional[Dict]:
+        """Parse transactions that appear on lines without dates (continuation transactions)"""
+        
+        # Look for patterns that indicate transactions:
+        # 1. VIS pattern: "VISAmazon Prime*RM5QQ" or "VISRevolut**9937*"
+        # 2. Card patterns: ")))FCA STRATFORD", ")))Circolo Popolare"  
+        # 3. ATM patterns: "ATMCASH YCSH JUL31"
+        # 4. Direct payments: "BPRitika Sneh wise", "CRRitika Sneh"
+        # 5. Direct debits: "DDHSBC CARD PYMT"
+        
+        trans_type = None
+        description = line
+        
+        # VIS transactions
+        if line.startswith('VIS'):
+            trans_type = 'VIS'
+            description = line[3:].strip()
+        # Card transactions starting with )))
+        elif line.startswith(')))'):
+            trans_type = 'CARD'
+            description = line[3:].strip()
+        # ATM transactions
+        elif line.startswith('ATM'):
+            trans_type = 'ATM'
+            description = line[3:].strip()
+        # Bank payments
+        elif line.startswith('BP'):
+            trans_type = 'BP'
+            description = line[2:].strip()
+        # Credits
+        elif line.startswith('CR'):
+            trans_type = 'CR'
+            description = line[2:].strip()
+        # Direct debits
+        elif line.startswith('DD'):
+            trans_type = 'DD'
+            description = line[2:].strip()
+        
+        if trans_type:
+            # Try to find amount on this line or next line
+            amount = None
+            
+            # First try current line
+            amount_match = re.search(r'([\d,]+\.\d{2})', line)
+            if amount_match:
+                amount = self._parse_amount(amount_match.group(1))
+                # Remove amount from description
+                description = re.sub(r'\s*[\d,]+\.\d{2}.*$', '', description).strip()
+            else:
+                # Try next line
+                if line_idx + 1 < len(all_lines):
+                    next_line = all_lines[line_idx + 1].strip()
+                    amount_match = re.search(r'([\d,]+\.\d{2})', next_line)
+                    if amount_match:
+                        amount = self._parse_amount(amount_match.group(1))
+                        # Add description from next line if it doesn't look like an amount-only line
+                        description_part = re.sub(r'\s*[\d,]+\.\d{2}.*$', '', next_line).strip()
+                        if description_part and len(description_part) > 2:
+                            description = f"{description} {description_part}".strip()
+            
+            # Validate amount is reasonable (not a balance)
+            if amount and 0.50 <= amount <= 10000:
+                try:
+                    transaction_date = datetime.strptime(date_str, '%d %b %y').date()
+                    transaction_direction = self._hsbc_transaction_type(trans_type, description)
+                    
+                    return {
+                        'date': transaction_date,
+                        'description': description,
+                        'amount': amount,
+                        'type': transaction_direction,
+                        'hsbc_type': trans_type,
+                        'raw_text': line
+                    }
+                except Exception as e:
+                    print(f"DEBUG: Error creating undated transaction: {str(e)}")
+        
+        return None
     
     def _parse_generic(self, text: str) -> List[Dict]:
         """Generic transaction parsing"""
@@ -565,10 +629,11 @@ class BankStatementProcessor:
         # BP = Bank Payment (outgoing payment)
         # DD = Direct Debit
         # OBP = Online Banking Payment
+        # CARD = Card transaction (starts with )))
         
         if trans_code in ['CR']:
             return 'credit'
-        elif trans_code in ['TFR', 'ATM', 'VIS', 'BP', 'DD', 'OBP']:
+        elif trans_code in ['TFR', 'ATM', 'VIS', 'BP', 'DD', 'OBP', 'CARD']:
             return 'debit'
         else:
             # Fall back to description analysis for unknown codes
@@ -697,8 +762,8 @@ class BankStatementProcessor:
                 'confidence': 0.95
             },
             'entertainment': {
-                'keywords': ['fca stratford', 'london'],
-                'confidence': 0.7
+                'keywords': ['fca stratford', 'london', 'cinema', 'theatre', 'entertainment'],
+                'confidence': 0.8
             }
         }
         
